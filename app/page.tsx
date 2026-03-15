@@ -1,65 +1,121 @@
-import Image from "next/image";
+import Link from "next/link";
+
+const chapters = [
+  {
+    n: 1,
+    title: "Átomos en Movimiento",
+    desc: "Todo lo que existe está hecho de átomos en constante movimiento.",
+    route: "/cap1",
+    available: true,
+    border: "border-blue-700/50 hover:border-blue-400",
+    badge: "text-blue-400 border-blue-500/40 bg-blue-500/10",
+  },
+  {
+    n: 2,
+    title: "Física Básica",
+    desc: "Las tres fuerzas fundamentales que explican toda la materia.",
+    route: "/cap2",
+    available: false,
+    border: "border-[#1a2a4a]/50",
+    badge: "text-[#2a3a6a] border-[#1a2a4a] bg-[#0a1020]",
+  },
+  {
+    n: 3,
+    title: "Relación con Otras Ciencias",
+    desc: "Cómo la física es la base de toda la ciencia.",
+    route: "/cap3",
+    available: false,
+    border: "border-[#1a2a4a]/50",
+    badge: "text-[#2a3a6a] border-[#1a2a4a] bg-[#0a1020]",
+  },
+  {
+    n: 4,
+    title: "Conservación de Energía",
+    desc: "La energía nunca se crea ni se destruye, solo cambia de forma.",
+    route: "/cap4",
+    available: false,
+    border: "border-[#1a2a4a]/50",
+    badge: "text-[#2a3a6a] border-[#1a2a4a] bg-[#0a1020]",
+  },
+  {
+    n: 5,
+    title: "Teoría de la Gravitación",
+    desc: "La fuerza invisible que mantiene el universo unido.",
+    route: "/cap5",
+    available: false,
+    border: "border-[#1a2a4a]/50",
+    badge: "text-[#2a3a6a] border-[#1a2a4a] bg-[#0a1020]",
+  },
+  {
+    n: 6,
+    title: "Comportamiento Cuántico",
+    desc: "Partículas que existen en dos lugares a la vez.",
+    route: "/cap6",
+    available: false,
+    border: "border-[#1a2a4a]/50",
+    badge: "text-[#2a3a6a] border-[#1a2a4a] bg-[#0a1020]",
+  },
+];
 
 export default function Home() {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+    <main className="min-h-screen bg-[#05050f] px-8 py-16">
+      <div className="max-w-4xl mx-auto mb-14">
+        <p className="text-[#2255aa] text-xs font-mono uppercase tracking-widest mb-3">
+          Richard P. Feynman
+        </p>
+        <h1 className="text-white text-4xl font-light tracking-wide mb-4">
+          Seis Piezas Fáciles
+        </h1>
+        <p className="text-[#2a4a7a] font-mono text-sm max-w-lg">
+          Visualizaciones 3D interactivas de los conceptos fundamentales de la física.
+          Cada capítulo es un mundo que puedes explorar.
+        </p>
+      </div>
+
+      <div className="max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {chapters.map((ch) => (
+          <div
+            key={ch.n}
+            className={`rounded-xl border bg-[#080d18] p-6 transition-all duration-200 ${ch.border} ${ch.available ? "cursor-pointer group hover:bg-[#0a1222]" : "opacity-40"}`}
           >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
-    </div>
+            {ch.available ? (
+              <Link href={ch.route} className="block">
+                <CardContent ch={ch} />
+              </Link>
+            ) : (
+              <CardContent ch={ch} />
+            )}
+          </div>
+        ))}
+      </div>
+
+      <div className="max-w-4xl mx-auto mt-14 text-center">
+        <p className="text-[#0d1a30] font-mono text-xs">feynviz — visualizaciones personales</p>
+      </div>
+    </main>
+  );
+}
+
+function CardContent({ ch }: { ch: (typeof chapters)[0] }) {
+  return (
+    <>
+      <div className="flex items-start justify-between mb-4">
+        <span className={`text-xs font-mono font-bold px-2 py-1 rounded border ${ch.badge}`}>
+          CAP. {ch.n}
+        </span>
+        {ch.available ? (
+          <span className="text-blue-500 font-mono text-[10px] uppercase tracking-widest group-hover:text-blue-300 transition-colors">
+            explorar →
+          </span>
+        ) : (
+          <span className="text-[#1a2a4a] font-mono text-[10px] uppercase tracking-widest">
+            próximamente
+          </span>
+        )}
+      </div>
+      <h2 className="text-white text-sm font-light mb-2 leading-snug">{ch.title}</h2>
+      <p className="text-[#2a4060] font-mono text-xs leading-relaxed">{ch.desc}</p>
+    </>
   );
 }
