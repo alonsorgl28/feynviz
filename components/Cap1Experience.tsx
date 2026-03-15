@@ -3,6 +3,11 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
+import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js';
+import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
+import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass.js';
+import { OutputPass } from 'three/examples/jsm/postprocessing/OutputPass.js';
+import { CSS2DRenderer, CSS2DObject } from 'three/examples/jsm/renderers/CSS2DRenderer.js';
 import { motion, AnimatePresence } from 'framer-motion';
 
 /* ─── SCENE DATA ──────────────────────────────────────────────────── */
@@ -14,8 +19,8 @@ const SCENES = [
     quote: '"All things are made of atoms — little particles that move around in perpetual motion, attracting each other when they are a little distance apart, but repelling upon being squeezed into one another. In that one sentence, you will see, there is an enormous amount of information about the world."',
     author: '— Feynman, Six Easy Pieces, Ch. 1',
     steps: [
-      { label: 'Temperature is speed', text: 'Temperature is not abstract — it is the average speed of atoms. Heating something means making its atoms move faster. Drag the slider and watch the same atoms transition between states.' },
-      { label: 'States are just energy', text: 'Solid, liquid, and gas are the same material at different velocities. The state of matter is not a property of the material — it is a property of its energy.' },
+      { label: 'Temperature is speed', text: 'Temperature is not abstract — it is the average speed of atoms. Each atom has a different speed (Maxwell-Boltzmann distribution). Color shows individual velocity: blue = slow, white = average, red = fast.' },
+      { label: 'States are just energy', text: 'Solid, liquid, and gas are the same material at different velocities. The state of matter is not a property of the material — it is a property of its energy. Notice how atom colors shift as you heat them.' },
     ],
     insight: 'In that single sentence, Feynman packed more information about the nature of reality than almost any other description in history.',
     control: 'slider' as const,
@@ -27,8 +32,8 @@ const SCENES = [
     quote: '"Now consider a drop of water. If we look at it very closely we see nothing — but if we look more and more closely, eventually we see the atoms of which it is composed, in their perpetual motion."',
     author: '— Feynman, Six Easy Pieces, Ch. 1',
     steps: [
-      { label: 'Shape creates polarity', text: 'A water molecule is exactly 2 Hydrogens + 1 Oxygen in a V-shape, at an angle of 104.5°. That asymmetry creates an electric dipole: the Oxygen side is negative (δ⁻), the Hydrogen side is positive (δ⁺).' },
-      { label: 'Polarity explains everything', text: 'That dipole explains surface tension, the unusually high boiling point, why ice floats, and why water dissolves almost everything. Click each atom to explore its properties.' },
+      { label: 'Shape creates polarity', text: 'A water molecule is exactly 2 Hydrogens + 1 Oxygen in a V-shape, at an angle of 104.5°. That asymmetry creates an electric dipole: the Oxygen side is negative (δ⁻), the Hydrogen side is positive (δ⁺). Click each atom.' },
+      { label: 'Polarity explains everything', text: 'That dipole explains surface tension, the unusually high boiling point, why ice floats, and why water dissolves almost everything. All from a 104.5° angle.' },
     ],
     insight: 'All the strangeness of water — and all life on Earth — emerges from a 104.5° angle.',
     control: 'none' as const,
@@ -85,31 +90,37 @@ function lerp(a: number, b: number, t: number) {
   return a + (b - a) * Math.max(0, Math.min(1, t));
 }
 
-function tempColor(temp: number): THREE.Color {
-  const t = temp / 100;
-  const c = new THREE.Color();
-  if (t < 0.5) { c.setRGB(lerp(0.15, 1.0, t * 2), lerp(0.35, 1.0, t * 2), 1.0); }
-  else { const s = (t - 0.5) * 2; c.setRGB(1.0, lerp(1.0, 0.15, s), lerp(1.0, 0.04, s)); }
-  return c;
+// Color from normalized temperature (0–1)
+function tempColorNorm(t: number, out: THREE.Color): THREE.Color {
+  if (t < 0.5) { out.setRGB(lerp(0.15, 1.0, t * 2), lerp(0.35, 1.0, t * 2), 1.0); }
+  else { const s = (t - 0.5) * 2; out.setRGB(1.0, lerp(1.0, 0.15, s), lerp(1.0, 0.04, s)); }
+  return out;
 }
 
 function mkAtom(r: number, color: THREE.Color): THREE.Group {
   const g = new THREE.Group();
-  g.add(new THREE.Mesh(new THREE.SphereGeometry(r, 28, 18), new THREE.MeshPhongMaterial({ color, emissive: color, emissiveIntensity: 0.45, shininess: 170 })));
-  g.add(new THREE.Mesh(new THREE.SphereGeometry(r * 1.9, 10, 7), new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.09, blending: THREE.AdditiveBlending, side: THREE.BackSide, depthWrite: false })));
+  g.add(new THREE.Mesh(
+    new THREE.SphereGeometry(r, 24, 16),
+    new THREE.MeshStandardMaterial({ color, emissive: color, emissiveIntensity: 0.55, roughness: 0.25, metalness: 0.1 })
+  ));
   return g;
 }
 
 function mkBond(a: THREE.Vector3, b: THREE.Vector3, color: THREE.Color): THREE.Mesh {
   const dir = b.clone().sub(a);
-  const m = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.07, dir.length(), 12), new THREE.MeshPhongMaterial({ color, emissive: color, emissiveIntensity: 0.25, shininess: 90 }));
+  const m = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.07, 0.07, dir.length(), 12),
+    new THREE.MeshStandardMaterial({ color, emissive: color, emissiveIntensity: 0.2, roughness: 0.4 })
+  );
   m.position.copy(a.clone().add(b).multiplyScalar(0.5));
   m.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), dir.normalize());
   return m;
 }
 
 function mkH2OGroup(scale = 1): THREE.Group {
-  const g = new THREE.Group(); const ang = (104.5 * Math.PI) / 180; const bl = 0.9 * scale;
+  const g = new THREE.Group();
+  const ang = (104.5 * Math.PI) / 180;
+  const bl = 0.9 * scale;
   const oP = new THREE.Vector3(0, 0, 0);
   const h1P = new THREE.Vector3(bl * Math.sin(ang / 2), -bl * Math.cos(ang / 2), 0);
   const h2P = new THREE.Vector3(-bl * Math.sin(ang / 2), -bl * Math.cos(ang / 2), 0);
@@ -125,9 +136,10 @@ function mkEnhancedBox(half: number): THREE.Group {
   const edgesMat = new THREE.LineBasicMaterial({ color: 0x4488ff, transparent: true, opacity: 0.8 });
   const edges = new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(half * 2, half * 2, half * 2)), edgesMat);
   g.add(edges); g.userData.edges = edges;
-  const cGeo = new THREE.SphereGeometry(0.1, 8, 6); const cMat = new THREE.MeshBasicMaterial({ color: 0x88ccff });
+  const cGeo = new THREE.SphereGeometry(0.1, 8, 6);
+  const cMat = new THREE.MeshBasicMaterial({ color: 0x88ccff });
   [[-1,-1,-1],[1,-1,-1],[-1,1,-1],[1,1,-1],[-1,-1,1],[1,-1,1],[-1,1,1],[1,1,1]].forEach(([x,y,z]) => {
-    const cm = new THREE.Mesh(cGeo, cMat); cm.position.set(x * half, y * half, z * half); g.add(cm);
+    const cm = new THREE.Mesh(cGeo, cMat); cm.position.set(x! * half, y! * half, z! * half); g.add(cm);
   });
   const grid = new THREE.GridHelper(half * 2, 8, 0x1a3a7a, 0x0d1e40); grid.position.y = -half + 0.01; g.add(grid);
   return g;
@@ -140,7 +152,7 @@ function mkStars(): THREE.Points {
     pos[i*3] = r*Math.sin(ph)*Math.cos(th); pos[i*3+1] = r*Math.sin(ph)*Math.sin(th); pos[i*3+2] = r*Math.cos(ph);
   }
   const geo = new THREE.BufferGeometry(); geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
-  return new THREE.Points(geo, new THREE.PointsMaterial({ color: 0xffffff, size: 0.22, transparent: true, opacity: 0.38, sizeAttenuation: true }));
+  return new THREE.Points(geo, new THREE.PointsMaterial({ color: 0xffffff, size: 0.22, transparent: true, opacity: 0.3, sizeAttenuation: true }));
 }
 
 /* ─── SCENE BUILDERS ──────────────────────────────────────────────── */
@@ -153,96 +165,203 @@ interface SceneHandle {
   getAvgSpeed?: () => number;
 }
 
+/* Scene 1 — Lennard-Jones physics, per-atom velocity coloring */
 function buildScene1(scene: THREE.Scene): SceneHandle {
-  const N = 80; const BOX = 4.5;
+  const N = 64; const BOX = 4.5;
+  const SIGMA = 1.4; const EPSILON = 0.8;
+  const CUT2 = (3.0 * SIGMA) ** 2;
+  const MIN_R2 = (0.65 * SIGMA) ** 2;
+
+  // Lattice init
   const lattice: THREE.Vector3[] = [];
   const cs = [-3, -1, 1, 3];
   for (const x of cs) for (const y of cs) for (const z of cs) if (lattice.length < N) lattice.push(new THREE.Vector3(x, y, z));
-  while (lattice.length < N) lattice.push(new THREE.Vector3((Math.random()-.5)*7,(Math.random()-.5)*7,(Math.random()-.5)*7));
 
-  const coreGeo = new THREE.SphereGeometry(0.22, 22, 14);
-  const coreMat = new THREE.MeshPhongMaterial({ emissiveIntensity: 0.45, shininess: 160 });
-  const coreMesh = new THREE.InstancedMesh(coreGeo, coreMat, N);
-  coreMesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
-  coreMesh.instanceColor = new THREE.InstancedBufferAttribute(new Float32Array(N * 3), 3);
-  scene.add(coreMesh);
-  const glowGeo = new THREE.SphereGeometry(0.44, 10, 8);
-  const glowMat = new THREE.MeshBasicMaterial({ transparent: true, opacity: 0.09, blending: THREE.AdditiveBlending, side: THREE.BackSide, depthWrite: false });
-  const glowMesh = new THREE.InstancedMesh(glowGeo, glowMat, N);
-  glowMesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
-  glowMesh.instanceColor = new THREE.InstancedBufferAttribute(new Float32Array(N * 3), 3);
-  scene.add(glowMesh);
+  const positions = lattice.map(v => v.clone().add(new THREE.Vector3((Math.random()-.5)*.25,(Math.random()-.5)*.25,(Math.random()-.5)*.25)));
+  const velocities = Array.from({length: N}, () => new THREE.Vector3((Math.random()-.5)*.08,(Math.random()-.5)*.08,(Math.random()-.5)*.08));
+
+  // Geometry — shared, single material
+  const geo = new THREE.SphereGeometry(0.22, 16, 12);
+  const mat = new THREE.MeshStandardMaterial({ color: 0xffffff, emissive: 0xffffff, emissiveIntensity: 0.35, roughness: 0.3, metalness: 0.05 });
+  const mesh = new THREE.InstancedMesh(geo, mat, N);
+  mesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+  mesh.instanceColor = new THREE.InstancedBufferAttribute(new Float32Array(N * 3), 3);
+  scene.add(mesh);
+
   const box = mkEnhancedBox(BOX); scene.add(box);
 
-  const positions = lattice.map(v => v.clone().add(new THREE.Vector3((Math.random()-.5)*.1,(Math.random()-.5)*.1,(Math.random()-.5)*.1)));
-  const velocities = Array.from({length: N}, () => new THREE.Vector3((Math.random()-.5)*.02,(Math.random()-.5)*.02,(Math.random()-.5)*.02));
-  const dummy = new THREE.Object3D(); let avgSpd = 0;
+  // Hoisted reusable objects — zero allocation in hot loop
+  const _color = new THREE.Color();
+  const _dummy = new THREE.Object3D();
+  const forces = Array.from({length: N}, () => new THREE.Vector3());
+  let avgSpd = 0;
 
   const update = (temp: number) => {
-    const tN = temp / 100; const spring = Math.max(0, 1 - tN * 2.2);
-    const sf = 0.008 + tN * 0.24; const maxS = sf * 2.5; const damp = lerp(0.87, 0.978, tN);
-    const col = tempColor(temp); let total = 0;
-    for (let i = 0; i < N; i++) {
-      const p = positions[i]; const v = velocities[i]; const h = lattice[i];
-      v.x += (h.x-p.x)*spring*0.06+(Math.random()-.5)*sf*0.6;
-      v.y += (h.y-p.y)*spring*0.06+(Math.random()-.5)*sf*0.6;
-      v.z += (h.z-p.z)*spring*0.06+(Math.random()-.5)*sf*0.6;
-      const spd = v.length(); if (spd > maxS) v.multiplyScalar(maxS/spd);
-      v.multiplyScalar(damp); p.add(v); total += spd;
-      const r = 0.22;
-      if (p.x>BOX-r){p.x=BOX-r;v.x*=-.75;} if (p.x<-BOX+r){p.x=-BOX+r;v.x*=-.75;}
-      if (p.y>BOX-r){p.y=BOX-r;v.y*=-.75;} if (p.y<-BOX+r){p.y=-BOX+r;v.y*=-.75;}
-      if (p.z>BOX-r){p.z=BOX-r;v.z*=-.75;} if (p.z<-BOX+r){p.z=-BOX+r;v.z*=-.75;}
-      dummy.position.copy(p); dummy.scale.setScalar(0.9+tN*0.22); dummy.updateMatrix();
-      coreMesh.setMatrixAt(i,dummy.matrix); glowMesh.setMatrixAt(i,dummy.matrix);
-      coreMesh.setColorAt(i,col); glowMesh.setColorAt(i,col);
+    const tN = temp / 100;
+    const targetKE = lerp(0.002, 1.4, tN);
+    const dt = 0.012;
+
+    // Reset forces
+    for (let i = 0; i < N; i++) forces[i].set(0, 0, 0);
+
+    // Lennard-Jones pairwise forces
+    for (let i = 0; i < N - 1; i++) {
+      for (let j = i + 1; j < N; j++) {
+        const dx = positions[j].x - positions[i].x;
+        const dy = positions[j].y - positions[i].y;
+        const dz = positions[j].z - positions[i].z;
+        let r2 = dx*dx + dy*dy + dz*dz;
+        if (r2 > CUT2) continue;
+        r2 = Math.max(r2, MIN_R2); // avoid singularity
+        const sr2 = (SIGMA * SIGMA) / r2;
+        const sr6 = sr2 * sr2 * sr2;
+        const sr12 = sr6 * sr6;
+        const f = 24 * EPSILON * (2 * sr12 - sr6) / r2;
+        forces[i].x -= f * dx; forces[i].y -= f * dy; forces[i].z -= f * dz;
+        forces[j].x += f * dx; forces[j].y += f * dy; forces[j].z += f * dz;
+      }
     }
-    avgSpd = total/N;
-    coreMesh.instanceMatrix.needsUpdate = true; glowMesh.instanceMatrix.needsUpdate = true;
-    if (coreMesh.instanceColor) coreMesh.instanceColor.needsUpdate = true;
-    if (glowMesh.instanceColor) glowMesh.instanceColor.needsUpdate = true;
-    const edges = box.userData.edges as THREE.LineSegments;
-    if (edges) (edges.material as THREE.LineBasicMaterial).opacity = 0.5 + 0.35*Math.sin(Date.now()*0.0015);
+
+    // Integrate velocities
+    for (let i = 0; i < N; i++) velocities[i].addScaledVector(forces[i], dt);
+
+    // Velocity-rescaling thermostat
+    let sumV2 = 0;
+    for (let i = 0; i < N; i++) sumV2 += velocities[i].lengthSq();
+    const currentKE = sumV2 / (2 * N);
+    if (currentKE > 1e-6) {
+      const scale = Math.min(Math.max(Math.sqrt(targetKE / currentKE), 0.5), 2.0);
+      for (let i = 0; i < N; i++) velocities[i].multiplyScalar(scale);
+    }
+
+    // Move + wall bounce + measure avg speed
+    let totalSpd = 0;
+    for (let i = 0; i < N; i++) {
+      const p = positions[i]; const v = velocities[i];
+      p.addScaledVector(v, dt);
+      const r = 0.22;
+      if (p.x > BOX-r) { p.x = BOX-r; v.x *= -0.85; }
+      if (p.x < -BOX+r) { p.x = -BOX+r; v.x *= -0.85; }
+      if (p.y > BOX-r) { p.y = BOX-r; v.y *= -0.85; }
+      if (p.y < -BOX+r) { p.y = -BOX+r; v.y *= -0.85; }
+      if (p.z > BOX-r) { p.z = BOX-r; v.z *= -0.85; }
+      if (p.z < -BOX+r) { p.z = -BOX+r; v.z *= -0.85; }
+      totalSpd += v.length();
+    }
+    avgSpd = totalSpd / N;
+
+    // Per-atom velocity coloring — shows Maxwell-Boltzmann distribution
+    for (let i = 0; i < N; i++) {
+      const spd = velocities[i].length();
+      // Shift the color by relative speed vs mean (±0.18), clamped to [0,1]
+      const relativeShift = avgSpd > 0 ? (spd / avgSpd - 1) * 0.18 : 0;
+      const t = Math.max(0, Math.min(1, tN + relativeShift));
+      tempColorNorm(t, _color);
+      _dummy.position.copy(positions[i]);
+      _dummy.scale.setScalar(0.9 + tN * 0.22);
+      _dummy.updateMatrix();
+      mesh.setMatrixAt(i, _dummy.matrix);
+      mesh.setColorAt(i, _color);
+    }
+
+    mesh.instanceMatrix.needsUpdate = true;
+    if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true;
+
+    // Pulsing box edges
+    const edgesObj = box.userData.edges as THREE.LineSegments;
+    if (edgesObj) (edgesObj.material as THREE.LineBasicMaterial).opacity = 0.45 + 0.35 * Math.sin(Date.now() * 0.0015);
   };
-  return { update, dispose: () => scene.remove(coreMesh, glowMesh, box), getAvgSpeed: () => avgSpd };
+
+  return { update, dispose: () => scene.remove(mesh, box), getAvgSpeed: () => avgSpd };
 }
 
+/* Scene 2 — H₂O with CSS2DObject labels */
 function buildScene2(scene: THREE.Scene, onAtomInfo: (info: { name: string; detail: string } | null) => void): SceneHandle {
   const group = new THREE.Group();
-  const ang = (104.5*Math.PI)/180; const bl = 1.6;
-  const oP = new THREE.Vector3(0,0,0);
-  const h1P = new THREE.Vector3(bl*Math.sin(ang/2), -bl*Math.cos(ang/2), 0);
-  const h2P = new THREE.Vector3(-bl*Math.sin(ang/2), -bl*Math.cos(ang/2), 0);
+  const ang = (104.5 * Math.PI) / 180; const bl = 1.6;
+  const oP = new THREE.Vector3(0, 0, 0);
+  const h1P = new THREE.Vector3(bl * Math.sin(ang / 2), -bl * Math.cos(ang / 2), 0);
+  const h2P = new THREE.Vector3(-bl * Math.sin(ang / 2), -bl * Math.cos(ang / 2), 0);
+
   const oAtom = mkAtom(0.72, new THREE.Color(0xff3300)); oAtom.position.copy(oP);
   oAtom.userData = { name: 'Oxygen (O) — δ⁻', detail: 'Atomic radius: 73 pm\nElectronegativity: 3.44\nPartial charge: δ⁻\n\nOxygen is the most electronegative atom in the molecule. It pulls shared electrons toward itself, creating the negative pole of the dipole. It acts as a hydrogen-bond "acceptor" — attracting H atoms from neighboring water molecules.\n\nThis is why water molecules stick to each other: each oxygen can attract up to 2 hydrogens from neighboring molecules.' };
+
   const h1Atom = mkAtom(0.42, new THREE.Color(0xddf4ff)); h1Atom.position.copy(h1P);
   h1Atom.userData = { name: 'Hydrogen (H) — δ⁺', detail: 'Atomic radius: 31 pm (smallest of all atoms)\nElectronegativity: 2.20\nPartial charge: δ⁺\n\nWith electrons pulled toward the oxygen, the hydrogen end carries a positive partial charge. It acts as a hydrogen-bond "donor" — attracting the oxygen of a neighboring water molecule.\n\nThese hydrogen bonds explain water\'s unusually high boiling point (100°C vs. the −80°C expected for a molecule this size).' };
+
   const h2Atom = mkAtom(0.42, new THREE.Color(0xddf4ff)); h2Atom.position.copy(h2P);
   h2Atom.userData = { name: 'Bond Angle: 104.5°', detail: 'The H–O–H angle is 104.5° — not 180° (linear).\n\nWhy? Oxygen has 2 lone pairs of electrons that repel the O–H bonds, pushing them closer together.\n\nIf the angle were 180°, the molecule would be symmetric and non-polar. Without polarity:\n→ No hydrogen bonds\n→ Water boils at −80°C\n→ No liquid water at room temperature\n→ No life as we know it\n\nA 104.5° angle makes life possible.' };
+
   group.add(oAtom, h1Atom, h2Atom);
   group.add(mkBond(oP, h1P, new THREE.Color(0xffee44)), mkBond(oP, h2P, new THREE.Color(0xffee44)));
-  group.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0,1.6,0), new THREE.Vector3(0,-1.3,0)]), new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.16 })));
+  group.add(new THREE.Line(
+    new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0, 1.6, 0), new THREE.Vector3(0, -1.3, 0)]),
+    new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.12 })
+  ));
+
+  // CSS2DObject labels — float in 3D space near each atom
+  const makeAtomLabel = (text: string, color: string, subtext?: string) => {
+    const div = document.createElement('div');
+    div.style.cssText = `font-family:monospace;font-size:11px;color:${color};background:rgba(3,6,18,0.88);border:1px solid ${color}44;padding:2px 7px;border-radius:4px;pointer-events:none;white-space:nowrap;line-height:1.4;`;
+    div.innerHTML = subtext ? `<strong>${text}</strong><br><span style="font-size:9px;opacity:0.65">${subtext}</span>` : `<strong>${text}</strong>`;
+    return new CSS2DObject(div);
+  };
+
+  const oLabel = makeAtomLabel('O', '#ff6644', 'δ⁻  electronegativity 3.44');
+  oLabel.position.set(0, 1.1, 0);
+  oAtom.add(oLabel);
+
+  const h1Label = makeAtomLabel('H', '#aaddff', 'δ⁺');
+  h1Label.position.set(0.3, 0.7, 0);
+  h1Atom.add(h1Label);
+
+  const h2Label = makeAtomLabel('H', '#aaddff', 'δ⁺');
+  h2Label.position.set(-0.3, 0.7, 0);
+  h2Atom.add(h2Label);
+
+  // Bond angle label — positioned at center
+  const angleDiv = document.createElement('div');
+  angleDiv.style.cssText = 'font-family:monospace;font-size:10px;color:#ffee44;background:rgba(3,6,18,0.8);border:1px solid #ffee4433;padding:2px 6px;border-radius:4px;pointer-events:none;';
+  angleDiv.textContent = '104.5°';
+  const angleLabel = new CSS2DObject(angleDiv);
+  angleLabel.position.set(0, -0.5, 0);
+  group.add(angleLabel);
+
   scene.add(group);
+
   const raycaster = new THREE.Raycaster(); const mouse = new THREE.Vector2();
   const clickTargets = [oAtom.children[0] as THREE.Mesh, h1Atom.children[0] as THREE.Mesh, h2Atom.children[0] as THREE.Mesh];
-  const parentMap = new Map([[clickTargets[0], oAtom],[clickTargets[1], h1Atom],[clickTargets[2], h2Atom]]);
+  const parentMap = new Map([[clickTargets[0], oAtom], [clickTargets[1], h1Atom], [clickTargets[2], h2Atom]]);
   let removeClick: (() => void) | null = null;
+
   const onMount = (camera: THREE.PerspectiveCamera, el: HTMLElement) => {
     const handler = (e: MouseEvent) => {
       const rect = el.getBoundingClientRect();
-      mouse.x = ((e.clientX-rect.left)/rect.width)*2-1; mouse.y = -((e.clientY-rect.top)/rect.height)*2+1;
+      mouse.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+      mouse.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
       raycaster.setFromCamera(mouse, camera);
       const hits = raycaster.intersectObjects(clickTargets);
-      if (hits.length>0) { const pg = parentMap.get(hits[0].object as THREE.Mesh); if (pg) onAtomInfo(pg.userData as {name:string;detail:string}); }
+      if (hits.length > 0) { const pg = parentMap.get(hits[0].object as THREE.Mesh); if (pg) onAtomInfo(pg.userData as { name: string; detail: string }); }
       else onAtomInfo(null);
     };
-    el.addEventListener('click', handler); removeClick = () => el.removeEventListener('click', handler);
+    el.addEventListener('click', handler);
+    removeClick = () => el.removeEventListener('click', handler);
     return () => removeClick?.();
   };
-  const update = () => { group.rotation.y += 0.007; group.rotation.x = Math.sin(Date.now()*0.0003)*0.16; };
-  return { update, dispose: () => { scene.remove(group); removeClick?.(); }, onMount };
+
+  const update = () => { group.rotation.y += 0.007; group.rotation.x = Math.sin(Date.now() * 0.0003) * 0.16; };
+
+  const dispose = () => {
+    // Remove CSS2D DOM elements explicitly
+    [oLabel, h1Label, h2Label, angleLabel].forEach(l => { l.element.remove(); });
+    scene.remove(group);
+    removeClick?.();
+  };
+
+  return { update, dispose, onMount };
 }
 
+/* Scene 3 — Three states of H₂O */
 function buildScene3(scene: THREE.Scene): SceneHandle {
   const lattice: THREE.Vector3[] = [];
   for (let x=-1;x<=1;x++) for (let y=-1;y<=1;y++) for (let z=-1;z<=1;z++) lattice.push(new THREE.Vector3(x*3.4,y*3.4,z*3.4));
@@ -272,7 +391,8 @@ function buildScene3(scene: THREE.Scene): SceneHandle {
   return { update, dispose: () => mols.forEach(m => scene.remove(m.g)) };
 }
 
-function buildScene4(scene: THREE.Scene, onPhase: (p:string)=>void): SceneHandle {
+/* Scene 4 — H₂ + O₂ → Water */
+function buildScene4(scene: THREE.Scene, onPhase: (p: string) => void): SceneHandle {
   const objs: THREE.Object3D[] = []; let phase='idle'; let t=0;
   const h2mols = Array.from({length:4},(_,i)=>{
     const g=new THREE.Group(); const pos=new THREE.Vector3(-5.5+(i%2)*2.2,(i<2?1.8:-1.8),(Math.random()-.5)*2);
@@ -290,16 +410,16 @@ function buildScene4(scene: THREE.Scene, onPhase: (p:string)=>void): SceneHandle
     g.position.copy(pos); scene.add(g); objs.push(g);
     return {g,pos:pos.clone(),vel:new THREE.Vector3((Math.random()-.5)*.02,(Math.random()-.5)*.02,0)};
   });
-  const flash=new THREE.PointLight(0xffaa00,0,25); scene.add(flash); objs.push(flash);
-  const products=[mkH2OGroup(1.1),mkH2OGroup(1.1)];
+  const flash = new THREE.PointLight(0xffaa00, 0, 25); scene.add(flash); objs.push(flash);
+  const products = [mkH2OGroup(1.1), mkH2OGroup(1.1)];
   products.forEach((p,i)=>{p.visible=false;p.position.set(i===0?-2:2,0,0);scene.add(p);objs.push(p);});
-  const allMols=[...h2mols,...o2mols];
-  const update=()=>{
-    if(phase==='idle'){
+  const allMols = [...h2mols, ...o2mols];
+  const update = () => {
+    if (phase==='idle') {
       allMols.forEach(m=>{m.vel.x+=(Math.random()-.5)*.003;m.vel.y+=(Math.random()-.5)*.003;m.vel.multiplyScalar(0.97);m.pos.add(m.vel);if(Math.abs(m.pos.x)>8)m.vel.x*=-1;if(Math.abs(m.pos.y)>4)m.vel.y*=-1;m.g.position.copy(m.pos);m.g.rotation.z+=0.008;});
-    } else if(phase==='reacting'){
+    } else if (phase==='reacting') {
       t+=0.016;
-      allMols.forEach(m=>{const toC=new THREE.Vector3().sub(m.pos).normalize().multiplyScalar(0.14);m.vel.add(toC);m.vel.multiplyScalar(0.9);m.pos.add(m.vel);m.g.position.copy(m.pos);m.g.rotation.z+=0.06;if(t>0.9)m.g.traverse(o=>{if((o as THREE.Mesh).isMesh){const mat=(o as THREE.Mesh).material as THREE.MeshPhongMaterial;mat.transparent=true;mat.opacity=Math.max(0,1-(t-0.9)/0.4);}});});
+      allMols.forEach(m=>{const toC=new THREE.Vector3().sub(m.pos).normalize().multiplyScalar(0.14);m.vel.add(toC);m.vel.multiplyScalar(0.9);m.pos.add(m.vel);m.g.position.copy(m.pos);m.g.rotation.z+=0.06;if(t>0.9)m.g.traverse(o=>{if((o as THREE.Mesh).isMesh){const mat=(o as THREE.Mesh).material as THREE.MeshStandardMaterial;mat.transparent=true;mat.opacity=Math.max(0,1-(t-0.9)/0.4);}});});
       flash.intensity=(t>0.7&&t<1.6)?Math.sin((t-0.7)/0.9*Math.PI)*12:0;
       if(t>1.1)products.forEach((p,i)=>{p.visible=true;p.scale.setScalar(Math.min(1,(t-1.1)/0.5));p.rotation.y+=0.02;p.position.y=Math.sin(Date.now()*.001+i)*.3;});
       if(t>2.2){phase='done';onPhase('done');}
@@ -307,11 +427,12 @@ function buildScene4(scene: THREE.Scene, onPhase: (p:string)=>void): SceneHandle
       products.forEach((p,i)=>{p.rotation.y+=0.012;p.position.y=Math.sin(Date.now()*.001+i)*.5;});
     }
   };
-  const triggerAction=()=>{if(phase==='idle'){phase='reacting';t=0;onPhase('reacting');}};
-  return{update,dispose:()=>objs.forEach(o=>scene.remove(o)),triggerAction};
+  const triggerAction = () => { if(phase==='idle'){phase='reacting';t=0;onPhase('reacting');} };
+  return { update, dispose: () => objs.forEach(o => scene.remove(o)), triggerAction };
 }
 
-function buildScene5(scene: THREE.Scene, onPhase: (p:string)=>void): SceneHandle {
+/* Scene 5 — NaCl dissolving */
+function buildScene5(scene: THREE.Scene, onPhase: (p: string) => void): SceneHandle {
   const objs: THREE.Object3D[] = []; let phase='crystal'; let t=0;
   const ions: {g:THREE.Group;pos:THREE.Vector3;home:THREE.Vector3;vel:THREE.Vector3;dissolved:boolean;delay:number}[] = [];
   let idx=0;
@@ -328,7 +449,7 @@ function buildScene5(scene: THREE.Scene, onPhase: (p:string)=>void): SceneHandle
     wg.userData={radius,theta,phi,speed:0.008+Math.random()*.01};
     scene.add(wg); objs.push(wg); return wg;
   });
-  const update=()=>{
+  const update = () => {
     if(phase==='crystal'){
       const w=0.04; ions.forEach(ion=>{ion.g.position.set(ion.home.x+(Math.random()-.5)*w,ion.home.y+(Math.random()-.5)*w,ion.home.z+(Math.random()-.5)*w);});
       waters.forEach(wg=>{wg.userData.theta+=wg.userData.speed;const{radius,theta,phi}=wg.userData;wg.position.set(radius*Math.sin(phi)*Math.cos(theta),radius*Math.cos(phi),radius*Math.sin(phi)*Math.sin(theta));});
@@ -342,11 +463,11 @@ function buildScene5(scene: THREE.Scene, onPhase: (p:string)=>void): SceneHandle
       waters.forEach(wg=>{wg.userData.theta+=wg.userData.speed;const{radius,theta,phi}=wg.userData;wg.position.set(radius*Math.sin(phi)*Math.cos(theta),radius*Math.cos(phi),radius*Math.sin(phi)*Math.sin(theta));});
     }
   };
-  const triggerAction=()=>{if(phase==='crystal'){phase='dissolving';t=0;onPhase('dissolving');}};
-  return{update,dispose:()=>objs.forEach(o=>scene.remove(o)),triggerAction};
+  const triggerAction = () => { if(phase==='crystal'){phase='dissolving';t=0;onPhase('dissolving');} };
+  return { update, dispose: () => objs.forEach(o => scene.remove(o)), triggerAction };
 }
 
-/* ─── MAIN COMPONENT ──────────────────────────────────────────────── */
+/* ─── HELPERS ─────────────────────────────────────────────────────── */
 
 function getStateLabel(id: SceneId, temp: number) {
   if (id===1) return temp<30?'SOLID':temp<65?'LIQUID':'GAS';
@@ -361,12 +482,16 @@ function getStateBadge(id: SceneId, temp: number) {
   return '';
 }
 
+/* ─── MAIN COMPONENT ──────────────────────────────────────────────── */
+
 export default function Cap1Experience() {
   const mountRef = useRef<HTMLDivElement>(null);
   const rendererRef = useRef<THREE.WebGLRenderer | null>(null);
   const cameraRef = useRef<THREE.PerspectiveCamera | null>(null);
   const threeSceneRef = useRef<THREE.Scene | null>(null);
   const controlsRef = useRef<OrbitControls | null>(null);
+  const composerRef = useRef<EffectComposer | null>(null);
+  const css2dRendererRef = useRef<CSS2DRenderer | null>(null);
   const animRef = useRef<number>(0);
   const handleRef = useRef<SceneHandle | null>(null);
   const tempRef = useRef(15);
@@ -386,26 +511,60 @@ export default function Cap1Experience() {
   const [transitionText, setTransitionText] = useState<string | null>(null);
   const [showDragHint, setShowDragHint] = useState(true);
 
+  // POE state (Predict-Observe-Explain) — Scene 1 only
+  const [poeAnswered, setPoeAnswered] = useState<'correct' | 'wrong' | null>(null);
+  const [poeVisible, setPoeVisible] = useState(true);
+
   const sceneData = SCENES.find(s => s.id === sceneId)!;
   const stateLabel = getStateLabel(sceneId, temp);
   const stateBadge = getStateBadge(sceneId, temp);
 
-  // Base Three.js setup
+  /* ── Base Three.js setup ── */
   useEffect(() => {
     const mount = mountRef.current; if (!mount) return;
     const W = mount.clientWidth; const H = mount.clientHeight;
+
+    // WebGL Renderer
     const renderer = new THREE.WebGLRenderer({ antialias: true });
-    renderer.setSize(W, H); renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-    mount.appendChild(renderer.domElement); rendererRef.current = renderer;
-    const camera = new THREE.PerspectiveCamera(55, W/H, 0.1, 300);
-    camera.position.set(12, 9, 18); camera.lookAt(0, 0, 0); cameraRef.current = camera;
+    renderer.setSize(W, H);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.1;
+    mount.appendChild(renderer.domElement);
+    rendererRef.current = renderer;
+
+    // CSS2D Renderer — floats HTML labels in 3D space
+    const css2d = new CSS2DRenderer();
+    css2d.setSize(W, H);
+    css2d.domElement.style.position = 'absolute';
+    css2d.domElement.style.top = '0';
+    css2d.domElement.style.left = '0';
+    css2d.domElement.style.pointerEvents = 'none';
+    mount.appendChild(css2d.domElement);
+    css2dRendererRef.current = css2d;
+
+    // Camera
+    const camera = new THREE.PerspectiveCamera(55, W / H, 0.1, 300);
+    camera.position.set(12, 9, 18); camera.lookAt(0, 0, 0);
+    cameraRef.current = camera;
+
+    // Scene
     const ts = new THREE.Scene();
-    ts.background = new THREE.Color(0x03040c); ts.fog = new THREE.FogExp2(0x03040c, 0.015);
+    ts.background = new THREE.Color(0x03040c);
+    ts.fog = new THREE.FogExp2(0x03040c, 0.012);
     threeSceneRef.current = ts;
-    ts.add(new THREE.AmbientLight(0xffffff, 0.2));
-    const key = new THREE.PointLight(0x6699ff, 4, 50); key.position.set(12, 12, 12); ts.add(key);
-    const fill = new THREE.PointLight(0xff4422, 2, 40); fill.position.set(-10, -8, -10); ts.add(fill);
+    ts.add(new THREE.AmbientLight(0xffffff, 0.18));
+    const key = new THREE.PointLight(0x7799ff, 4.5, 55); key.position.set(12, 12, 12); ts.add(key);
+    const fill = new THREE.PointLight(0xff4422, 1.8, 40); fill.position.set(-10, -8, -10); ts.add(fill);
     ts.add(mkStars());
+
+    // EffectComposer + UnrealBloomPass
+    const composer = new EffectComposer(renderer);
+    composer.addPass(new RenderPass(ts, camera));
+    const bloom = new UnrealBloomPass(new THREE.Vector2(W, H), 0.85, 0.38, 0.72);
+    composer.addPass(bloom);
+    composer.addPass(new OutputPass());
+    composerRef.current = composer;
 
     // OrbitControls
     const controls = new OrbitControls(camera, renderer.domElement);
@@ -422,8 +581,11 @@ export default function Cap1Experience() {
     controlsRef.current = controls;
 
     const onResize = () => {
-      const w=mount.clientWidth,h=mount.clientHeight;
-      camera.aspect=w/h; camera.updateProjectionMatrix(); renderer.setSize(w,h);
+      const w = mount.clientWidth; const h = mount.clientHeight;
+      camera.aspect = w / h; camera.updateProjectionMatrix();
+      renderer.setSize(w, h);
+      composer.setSize(w, h);
+      css2d.setSize(w, h);
     };
     window.addEventListener('resize', onResize);
 
@@ -446,18 +608,23 @@ export default function Cap1Experience() {
       if (frameRef.current % 20 === 0 && speedDisplayRef.current && handleRef.current?.getAvgSpeed) {
         speedDisplayRef.current.textContent = (handleRef.current.getAvgSpeed() * 10000).toFixed(1);
       }
-      renderer.render(ts, camera);
+      composer.render();
+      css2d.render(ts, camera);
     };
     tick();
 
     return () => {
-      cancelAnimationFrame(animRef.current); window.removeEventListener('resize', onResize);
-      controls.dispose(); renderer.dispose();
+      cancelAnimationFrame(animRef.current);
+      window.removeEventListener('resize', onResize);
+      controls.dispose();
+      composer.dispose();
+      renderer.dispose();
       if (mount.contains(renderer.domElement)) mount.removeChild(renderer.domElement);
+      if (mount.contains(css2d.domElement)) mount.removeChild(css2d.domElement);
     };
   }, []);
 
-  // Scene switching
+  /* ── Scene switching ── */
   useEffect(() => {
     const ts = threeSceneRef.current; const camera = cameraRef.current; const mount = mountRef.current;
     if (!ts || !camera || !mount) return;
@@ -486,10 +653,22 @@ export default function Cap1Experience() {
     else if (prev >= 65 && v < 65) { setTransitionText('CONDENSATION'); setTimeout(() => setTransitionText(null), 1800); }
   }, []);
 
-  const goScene = useCallback((id: SceneId) => { setSceneId(id); tempRef.current = 15; setTemp(15); }, []);
+  const goScene = useCallback((id: SceneId) => {
+    setSceneId(id); tempRef.current = 15; setTemp(15);
+    if (id === 1) { setPoeAnswered(null); setPoeVisible(true); }
+  }, []);
+
+  const handlePOE = useCallback((correct: boolean) => {
+    setPoeAnswered(correct ? 'correct' : 'wrong');
+    setTimeout(() => setPoeVisible(false), 2200);
+  }, []);
+
   const buttonLabel = (sceneData as { buttonLabel?: string }).buttonLabel;
   const buttonDone = actionPhase === 'done' || actionPhase === 'dissolved';
   const buttonActive = actionPhase === 'reacting' || actionPhase === 'dissolving';
+
+  // Next scene info for scenes 4 and 5
+  const nextScene = sceneId < 5 ? SCENES.find(s => s.id === sceneId + 1) : null;
 
   return (
     <div className="w-screen h-screen flex flex-col bg-[#03040c] overflow-hidden">
@@ -529,28 +708,22 @@ export default function Cap1Experience() {
               transition={{ duration: 0.22, ease: 'easeInOut' }}
               className="flex-1 flex flex-col p-5 overflow-y-auto gap-5"
             >
-              {/* Scene badge */}
               <div className="flex items-center gap-2">
                 <span className="w-5 h-5 rounded-full bg-blue-900/50 border border-blue-700/50 flex items-center justify-center font-mono text-[10px] text-blue-400">{sceneId}</span>
                 <span className="text-[#1a3a5a] font-mono text-[9px] uppercase tracking-widest">{sceneId} of 5</span>
               </div>
 
-              {/* Question */}
               <div>
                 <p className="text-[#1a3a5a] font-mono text-[9px] uppercase tracking-widest mb-1.5">The Question</p>
                 <h2 className="text-white text-sm font-semibold leading-snug">{sceneData.question}</h2>
               </div>
 
-              {/* Feynman Quote */}
               <div className="border-l-2 border-blue-700/40 pl-3">
                 <p className="text-[#1a3a5a] font-mono text-[9px] uppercase tracking-widest mb-1.5">Feynman Said</p>
-                <blockquote className="text-[#2a4a70] font-mono text-[10px] italic leading-relaxed mb-1">
-                  {sceneData.quote}
-                </blockquote>
+                <blockquote className="text-[#2a4a70] font-mono text-[10px] italic leading-relaxed mb-1">{sceneData.quote}</blockquote>
                 <cite className="text-[#142030] font-mono text-[9px] not-italic">{sceneData.author}</cite>
               </div>
 
-              {/* Steps */}
               <div>
                 <p className="text-[#1a3a5a] font-mono text-[9px] uppercase tracking-widest mb-2.5">How It Works</p>
                 <div className="space-y-4">
@@ -566,7 +739,6 @@ export default function Cap1Experience() {
                 </div>
               </div>
 
-              {/* Key Insight */}
               <div className="bg-[#060f1e] border border-blue-900/40 rounded-lg p-3 mt-auto">
                 <div className="flex items-center gap-1.5 mb-1.5">
                   <span className="text-blue-500 text-[10px]">✦</span>
@@ -577,7 +749,6 @@ export default function Cap1Experience() {
             </motion.div>
           </AnimatePresence>
 
-          {/* Scene 2 legend (inside sidebar bottom) */}
           {sceneId === 2 && (
             <motion.div initial={{opacity:0}} animate={{opacity:1}} className="border-t border-[#0d1e35] p-4">
               <p className="text-[#1a3a5a] font-mono text-[9px] uppercase tracking-widest mb-2">Legend</p>
@@ -585,7 +756,7 @@ export default function Cap1Experience() {
                 <div className="flex items-center gap-2"><span className="w-2.5 h-2.5 rounded-full bg-[#ff3300] shrink-0"/><span className="text-[#884433]">O — Oxygen (δ⁻, larger)</span></div>
                 <div className="flex items-center gap-2"><span className="w-2.5 h-2.5 rounded-full bg-[#ddf4ff] shrink-0"/><span className="text-[#6688aa]">H — Hydrogen (δ⁺, smaller)</span></div>
                 <div className="flex items-center gap-2"><span className="w-4 h-px bg-[#ffee44] shrink-0"/><span className="text-[#665522]">Covalent bond</span></div>
-                <div className="mt-1 text-[#1a2a3a]">Click any atom to explore its properties.</div>
+                <div className="mt-1 text-[#1a2a3a]">Labels float in 3D space. Click any atom to explore.</div>
               </div>
             </motion.div>
           )}
@@ -594,7 +765,6 @@ export default function Cap1Experience() {
         {/* ── Canvas + Controls ── */}
         <div className="flex-1 flex flex-col">
 
-          {/* Canvas area */}
           <div className="flex-1 relative">
             <div ref={mountRef} className="absolute inset-0" />
 
@@ -618,7 +788,7 @@ export default function Cap1Experience() {
             <AnimatePresence>
               {transitionText && (
                 <motion.div
-                  initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }}
+                  initial={{ opacity: 0, scale: 0.85 }} animate={{ opacity: 1, scale: 1 }}
                   exit={{ opacity: 0, scale: 1.1 }} transition={{ duration: 0.3 }}
                   className="absolute inset-0 flex items-center justify-center pointer-events-none"
                 >
@@ -629,7 +799,7 @@ export default function Cap1Experience() {
               )}
             </AnimatePresence>
 
-            {/* State badge (top-left of canvas) */}
+            {/* State badge */}
             {stateLabel && (
               <div className="absolute top-4 left-4 pointer-events-none">
                 <div className={`inline-flex items-center px-3 py-1.5 rounded-lg border font-mono text-xs font-bold tracking-widest ${stateBadge}`}>
@@ -638,16 +808,57 @@ export default function Cap1Experience() {
               </div>
             )}
 
-            {/* Speed readout (scene 1) */}
+            {/* Avg speed readout — Scene 1 only */}
             {sceneId === 1 && (
               <div className="absolute top-4 right-4 text-right pointer-events-none">
-                <p className="text-[#1a3050] font-mono text-[9px] uppercase tracking-widest">Avg. speed</p>
+                <p className="text-[#1a3050] font-mono text-[9px] uppercase tracking-widest">Avg. atom speed</p>
                 <p className="text-white font-mono text-lg font-bold leading-none"><span ref={speedDisplayRef}>—</span></p>
-                <p className="text-[#1a3050] font-mono text-[9px]">× 10⁻⁴ u/s</p>
+                <p className="text-[#1a3050] font-mono text-[9px]">× 10⁻⁴ u/s = temperature</p>
               </div>
             )}
 
-            {/* Atom info popup (scene 2) */}
+            {/* POE overlay — Scene 1 only */}
+            <AnimatePresence>
+              {sceneId === 1 && poeVisible && !poeAnswered && (
+                <motion.div
+                  initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }} transition={{ delay: 0.8, duration: 0.4 }}
+                  className="absolute top-4 left-1/2 -translate-x-1/2 z-10"
+                >
+                  <div className="bg-[#040c1a]/96 border border-blue-700/40 rounded-xl px-5 py-3.5 backdrop-blur-sm text-center shadow-2xl">
+                    <p className="text-[#2a4a6a] font-mono text-[9px] uppercase tracking-widest mb-1.5">Predict first</p>
+                    <p className="text-white font-mono text-xs mb-3">What happens when atoms are heated?</p>
+                    <div className="flex gap-2 justify-center">
+                      <button onClick={() => handlePOE(true)} className="px-3 py-1.5 rounded-lg border border-blue-600/50 text-blue-300 font-mono text-[10px] hover:bg-blue-900/30 transition-colors">
+                        They move faster
+                      </button>
+                      <button onClick={() => handlePOE(false)} className="px-3 py-1.5 rounded-lg border border-[#1a3050]/50 text-[#2a4060] font-mono text-[10px] hover:bg-[#0a1a30] transition-colors">
+                        They change chemistry
+                      </button>
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            {/* POE answer feedback */}
+            <AnimatePresence>
+              {sceneId === 1 && poeAnswered && poeVisible && (
+                <motion.div
+                  initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.3 }}
+                  className="absolute top-4 left-1/2 -translate-x-1/2 z-10"
+                >
+                  <div className={`bg-[#040c1a]/96 border rounded-xl px-5 py-3 backdrop-blur-sm text-center shadow-2xl ${poeAnswered === 'correct' ? 'border-emerald-600/50' : 'border-orange-600/40'}`}>
+                    <p className={`font-mono text-xs font-bold ${poeAnswered === 'correct' ? 'text-emerald-300' : 'text-orange-300'}`}>
+                      {poeAnswered === 'correct' ? '✓ Correct! Now drag the slider to see it.' : 'Not quite — drag the slider to find out.'}
+                    </p>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            {/* Atom info popup — Scene 2 */}
             <AnimatePresence>
               {atomInfo && (
                 <motion.div
@@ -664,6 +875,7 @@ export default function Cap1Experience() {
 
           {/* ── Controls bar ── */}
           <div className="h-20 bg-[#040810] border-t border-[#0d1e35] flex items-center justify-center px-8 gap-8 shrink-0">
+
             {sceneData.control === 'slider' && (
               <div className="w-full max-w-md">
                 <div className="flex justify-between font-mono text-[9px] mb-1 px-0.5">
@@ -671,22 +883,38 @@ export default function Cap1Experience() {
                   <span className="text-white font-bold">{temp}°</span>
                   <span className="text-orange-400/60 uppercase tracking-widest">{sceneId === 3 ? 'STEAM ♨' : 'GAS ♨'}</span>
                 </div>
-                <input type="range" min={0} max={100} value={temp} onChange={e => handleTempChange(Number(e.target.value))}
-                  style={{ background: `linear-gradient(to right,#1a55cc 0%,#22aaff ${temp*.35}%,#44ffaa ${temp*.65}%,#ffaa22 ${temp*.9}%,#ff3300 100%)` }}
-                />
+                {/* Slider with precise transition markers */}
+                <div className="relative">
+                  <input type="range" min={0} max={100} value={temp} onChange={e => handleTempChange(Number(e.target.value))}
+                    style={{ background: `linear-gradient(to right,#1a55cc 0%,#22aaff ${temp*.35}%,#44ffaa ${temp*.65}%,#ffaa22 ${temp*.9}%,#ff3300 100%)` }}
+                  />
+                  {/* MELT marker at 30% */}
+                  <div className="absolute top-0 bottom-0 flex flex-col items-center pointer-events-none" style={{ left: '30%' }}>
+                    <div className="w-px h-2 bg-cyan-500/50 mt-1" />
+                  </div>
+                  {/* BOIL marker at 65% */}
+                  <div className="absolute top-0 bottom-0 flex flex-col items-center pointer-events-none" style={{ left: '65%' }}>
+                    <div className="w-px h-2 bg-orange-500/50 mt-1" />
+                  </div>
+                </div>
                 <div className="flex justify-between font-mono text-[9px] mt-1 px-0.5">
                   <span className="text-[#0d1e35]">0°</span>
-                  <span className="text-blue-500/30" style={{marginLeft:`${30}%`}}>│ MELT</span>
-                  <span className="text-orange-500/30" style={{marginLeft:'0'}}>BOIL │</span>
+                  <span className="text-cyan-500/40 tracking-widest" style={{ marginLeft: '22%' }}>│ 30° MELT</span>
+                  <span className="text-orange-500/40 tracking-widest">65° BOIL │</span>
                   <span className="text-[#0d1e35]">100°</span>
                 </div>
               </div>
             )}
+
             {sceneData.control === 'button' && (
-              <div className="flex items-center gap-4">
+              <div className="flex items-center gap-6">
                 <div className="text-right">
-                  <p className="text-[#1a3050] font-mono text-[9px]">H₂ (cyan) + O₂ (red)</p>
-                  <p className="text-[#2a4060] font-mono text-[9px]">React to form H₂O</p>
+                  <p className="text-[#1a3050] font-mono text-[9px]">
+                    {sceneId === 4 ? 'H₂ (cyan) + O₂ (red)' : 'NaCl crystal + H₂O (blue)'}
+                  </p>
+                  <p className="text-[#2a4060] font-mono text-[9px]">
+                    {sceneId === 4 ? 'React to form H₂O' : 'Water pulls ions apart'}
+                  </p>
                 </div>
                 <button
                   onClick={() => !buttonDone && !buttonActive && handleRef.current?.triggerAction?.()}
@@ -698,8 +926,21 @@ export default function Cap1Experience() {
                   }`}>
                   {buttonDone ? '✓ COMPLETE' : buttonActive ? 'IN PROGRESS...' : buttonLabel}
                 </button>
+                {/* Next scene hint after completion */}
+                <AnimatePresence>
+                  {buttonDone && nextScene && (
+                    <motion.button
+                      initial={{ opacity: 0, x: 8 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0 }}
+                      onClick={() => goScene(nextScene.id as SceneId)}
+                      className="px-4 py-2.5 rounded-xl border border-blue-700/40 text-blue-400/70 font-mono text-[10px] uppercase tracking-widest hover:text-blue-300 hover:border-blue-500/60 transition-all"
+                    >
+                      → {nextScene.nav}
+                    </motion.button>
+                  )}
+                </AnimatePresence>
               </div>
             )}
+
             {sceneData.control === 'none' && (
               <p className="text-[#1a3050] font-mono text-[10px] uppercase tracking-widest">Click any atom to explore · Drag to rotate · Scroll to zoom</p>
             )}
