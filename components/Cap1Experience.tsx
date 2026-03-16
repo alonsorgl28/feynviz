@@ -486,16 +486,16 @@ function getStateBadge(id: SceneId, temp: number) {
 
 function getCaption(id: SceneId, temp: number): string {
   if (id === 1) {
-    if (temp < 10) return 'Atoms vibrate around fixed positions. This is a solid.';
-    if (temp < 30) return 'More energy → faster vibrations. The lattice starts to strain.';
-    if (temp < 50) return 'The rigid structure has broken. Atoms slide past each other — liquid.';
-    if (temp < 65) return 'Atoms move freely but still interact. Temperature is just average speed.';
-    return 'Atoms fly in all directions with enough energy to escape — gas.';
+    if (temp < 10) return 'Atoms vibrate 10¹² times per second — faster than any sound — yet stay locked in place.';
+    if (temp < 30) return 'Higher temperature = faster atoms. Every degree you add is energy going directly into their motion.';
+    if (temp < 50) return 'The lattice has broken. Atoms still attract each other, but now have enough energy to slide past.';
+    if (temp < 65) return 'Temperature is literally the average speed of atoms. Nothing more, nothing less.';
+    return 'Gas atoms move at ~500 m/s — the speed of a rifle bullet — in random directions.';
   }
   if (id === 3) {
-    if (temp < 30) return 'H₂O molecules locked in a hexagonal lattice — ice.';
-    if (temp < 65) return 'Bonds broken, molecules slide freely — liquid water.';
-    return 'Molecules escape the liquid completely — steam.';
+    if (temp < 30) return 'Ice is less dense than liquid water because its hexagonal lattice has gaps — that\'s why it floats.';
+    if (temp < 65) return 'The same H₂O molecule in three states. No chemistry changes — only energy.';
+    return 'Steam molecules are 1600× more spread out than liquid water at the same mass.';
   }
   return '';
 }
@@ -516,6 +516,31 @@ const DISCOVERY: Record<string, { title: string; body: string }> = {
   condense: {
     title: 'Condensation',
     body: 'Atoms slow down enough to be captured by intermolecular forces again.\n\nGas becomes liquid as energy leaves the system.',
+  },
+};
+
+/* ─── SCENE INTRO CONTEXT ─────────────────────────────────────────── */
+
+const SCENE_CONTEXT: Record<number, { hook: string; fact: string }> = {
+  1: {
+    hook: 'Everything you see, touch, and breathe is made of atoms.',
+    fact: 'They are so small that 10 million atoms would fit across a single human hair.',
+  },
+  2: {
+    hook: 'A water molecule is just 3 atoms — yet it makes life on Earth possible.',
+    fact: 'Its 104.5° angle creates an electric dipole that explains surface tension, why ice floats, and why water dissolves almost everything.',
+  },
+  3: {
+    hook: 'Ice, water, and steam are the exact same molecule.',
+    fact: 'The only difference between them is energy. There is no chemistry change — just speed.',
+  },
+  4: {
+    hook: 'Fire is atoms finding a more stable configuration.',
+    fact: 'Burn hydrogen and the only product is water. The most familiar reaction in history is just atoms rearranging.',
+  },
+  5: {
+    hook: 'Salt doesn\'t dissolve in water — water pulls it apart atom by atom.',
+    fact: 'The same electrical forces that govern circuits dissolve the salt in your food.',
   },
 };
 
@@ -745,53 +770,76 @@ export default function Cap1Experience() {
       <div ref={mountRef} className="absolute inset-0" />
 
       {/* ── Header overlay ── */}
-      <header className="absolute top-0 left-0 right-0 h-11 flex items-center justify-between px-5 z-20"
-        style={{ background: 'linear-gradient(to bottom, rgba(4,8,16,0.85) 0%, transparent 100%)' }}>
+      <header className="absolute top-0 left-0 right-0 h-12 flex items-center justify-between px-5 z-20"
+        style={{ background: 'rgba(3,4,12,0.82)', borderBottom: '1px solid rgba(255,255,255,0.05)', backdropFilter: 'blur(12px)' }}>
         <div className="flex items-center gap-3">
-          <a href="/" className="text-white/40 font-mono text-[11px] hover:text-white/80 transition-colors">← Back</a>
-          <span className="text-white/15">·</span>
-          <span className="text-white/30 font-mono text-[11px]">Six Easy Pieces</span>
-          <span className="text-white/15">·</span>
-          <span className="text-white/55 font-mono text-[11px]">Chapter 1 — Atoms in Motion</span>
+          <a href="/" className="text-white/55 font-mono text-[11px] hover:text-white transition-colors">← Back</a>
+          <span className="text-white/20">·</span>
+          <span className="text-white/40 font-mono text-[11px]">Six Easy Pieces</span>
+          <span className="text-white/20">·</span>
+          <span className="text-white/70 font-mono text-[11px]">Chapter 1 — Atoms in Motion</span>
         </div>
-        <nav className="flex gap-1">
-          {SCENES.map(s => (
-            <button key={s.id} onClick={() => goScene(s.id as SceneId)}
-              className={`px-2.5 py-1 rounded font-mono text-[10px] uppercase tracking-wider transition-all ${
-                sceneId === s.id
-                  ? 'bg-blue-900/60 border border-blue-500/50 text-blue-300'
-                  : 'text-white/25 hover:text-white/55 border border-transparent'
-              }`}>
-              {s.id}. {s.nav}
-            </button>
-          ))}
-        </nav>
+        {/* Scene nav + progress */}
+        <div className="flex items-center gap-4">
+          <div className="flex gap-1.5">
+            {SCENES.map(s => (
+              <button
+                key={s.id}
+                onClick={() => goScene(s.id as SceneId)}
+                title={s.nav}
+                className={`transition-all rounded-full ${sceneId === s.id ? 'bg-[#4da3ff] w-5 h-2' : 'bg-white/20 hover:bg-white/40 w-2 h-2'}`}
+              />
+            ))}
+          </div>
+          <nav className="flex gap-1">
+            {SCENES.map(s => (
+              <button key={s.id} onClick={() => goScene(s.id as SceneId)}
+                className={`px-2.5 py-1 rounded font-mono text-[10px] uppercase tracking-wider transition-all ${
+                  sceneId === s.id
+                    ? 'bg-[#4da3ff]/20 border border-[#4da3ff]/50 text-[#4da3ff]'
+                    : 'text-white/45 hover:text-white/75 border border-transparent hover:bg-white/5'
+                }`}>
+                {s.id}. {s.nav}
+              </button>
+            ))}
+          </nav>
+        </div>
       </header>
 
-      {/* ══ 1. SCENE INTRO — large question, fades after 3s ══ */}
+      {/* ══ 1. SCENE INTRO — question + context, fades after 3.2s ══ */}
       <AnimatePresence>
         {sceneIntroVisible && (
           <motion.div
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            transition={{ duration: 0.5 }}
+            transition={{ duration: 0.45 }}
             className="absolute inset-0 flex flex-col items-center justify-center z-30 pointer-events-none"
-            style={{ background: 'radial-gradient(ellipse at center, rgba(4,8,16,0.7) 0%, transparent 70%)' }}
+            style={{ background: 'radial-gradient(ellipse at center, rgba(3,6,18,0.85) 0%, rgba(3,6,18,0.3) 60%, transparent 80%)' }}
           >
             <AnimatePresence mode="wait">
               <motion.div key={sceneId}
-                initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }}
+                initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}
                 transition={{ duration: 0.4, delay: 0.1 }}
-                className="text-center px-8 max-w-2xl"
+                className="text-center px-8 max-w-xl flex flex-col gap-4"
               >
-                <p className="text-[#4da3ff]/60 font-mono text-[11px] uppercase tracking-widest mb-4">
+                <p className="text-[#4da3ff]/55 font-mono text-[10px] uppercase tracking-widest">
                   {sceneId} of 5 · {sceneData.nav}
                 </p>
-                <h2 className="text-white font-bold leading-tight mb-3"
-                  style={{ fontSize: 'clamp(24px, 3.5vw, 42px)', letterSpacing: '-0.02em' }}>
+                <h2 className="text-white font-bold leading-tight"
+                  style={{ fontSize: 'clamp(22px, 3vw, 38px)', letterSpacing: '-0.02em' }}>
                   {sceneData.question}
                 </h2>
-                <p className="text-white/30 font-mono text-xs uppercase tracking-widest">
-                  Explore the simulation below
+                {SCENE_CONTEXT[sceneId] && (
+                  <div className="flex flex-col gap-2">
+                    <p className="text-white/75 text-base leading-relaxed">
+                      {SCENE_CONTEXT[sceneId].hook}
+                    </p>
+                    <p className="text-white/40 text-sm leading-relaxed">
+                      {SCENE_CONTEXT[sceneId].fact}
+                    </p>
+                  </div>
+                )}
+                <p className="text-white/20 font-mono text-[10px] uppercase tracking-widest mt-1">
+                  Explore the simulation ↓
                 </p>
               </motion.div>
             </AnimatePresence>
@@ -864,27 +912,30 @@ export default function Cap1Experience() {
         )}
       </AnimatePresence>
 
-      {/* ══ 5. DISCOVERY CARD — appears at phase transitions ══ */}
+      {/* ══ 5. DISCOVERY CARD — bottom left, doesn't block simulation ══ */}
       <AnimatePresence>
         {discoveryCard && (
           <motion.div
-            initial={{ opacity: 0, scale: 0.95, y: 10 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.95, y: 10 }}
-            transition={{ duration: 0.3 }}
-            className="absolute left-1/2 -translate-x-1/2 z-30 w-80"
-            style={{ top: '50%', transform: 'translate(-50%, -50%)' }}
+            initial={{ opacity: 0, x: -16, y: 8 }}
+            animate={{ opacity: 1, x: 0, y: 0 }}
+            exit={{ opacity: 0, x: -16, y: 8 }}
+            transition={{ duration: 0.3, ease: 'easeOut' }}
+            className="absolute left-4 z-30 w-72"
+            style={{ bottom: '108px' }}
           >
-            <div className="rounded-2xl p-6 shadow-2xl"
+            <div className="rounded-2xl p-5 shadow-2xl"
               style={{ background: 'rgba(4,10,22,0.97)', border: '1px solid rgba(77,163,255,0.3)', backdropFilter: 'blur(20px)' }}>
-              <p className="text-[#4da3ff] font-mono text-[10px] uppercase tracking-widest mb-1">Phase change</p>
-              <h3 className="text-white text-lg font-bold mb-3">{discoveryCard.title}</h3>
-              <p className="text-white/65 text-sm leading-relaxed whitespace-pre-line mb-5">{discoveryCard.body}</p>
+              <div className="flex items-center gap-2 mb-1">
+                <span className="w-1.5 h-1.5 rounded-full bg-[#4da3ff]" />
+                <p className="text-[#4da3ff] font-mono text-[10px] uppercase tracking-widest">Phase change</p>
+              </div>
+              <h3 className="text-white text-base font-bold mb-2">{discoveryCard.title}</h3>
+              <p className="text-white/60 text-sm leading-relaxed whitespace-pre-line mb-4">{discoveryCard.body}</p>
               <button
                 onClick={() => setDiscoveryCard(null)}
-                className="w-full py-2 rounded-lg text-sm font-medium text-white/70 hover:text-white transition-colors"
-                style={{ background: 'rgba(77,163,255,0.1)', border: '1px solid rgba(77,163,255,0.2)' }}>
-                Got it — continue exploring
+                className="w-full py-1.5 rounded-lg text-sm text-white/60 hover:text-white transition-colors"
+                style={{ background: 'rgba(77,163,255,0.08)', border: '1px solid rgba(77,163,255,0.18)' }}>
+                Got it
               </button>
             </div>
           </motion.div>
