@@ -698,7 +698,7 @@ export default function Cap1Experience() {
       <div className="flex flex-1 overflow-hidden">
 
         {/* ── Left Sidebar ── */}
-        <aside className="w-72 shrink-0 bg-[#040810] border-r border-[#0d1e35] flex flex-col overflow-hidden">
+        <aside className="w-96 shrink-0 bg-[#040810] border-r border-[#0d1e35] flex flex-col overflow-hidden">
           <AnimatePresence mode="wait">
             <motion.div
               key={sceneId}
@@ -706,57 +706,63 @@ export default function Cap1Experience() {
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: 12 }}
               transition={{ duration: 0.22, ease: 'easeInOut' }}
-              className="flex-1 flex flex-col p-5 overflow-y-auto gap-5"
+              className="flex-1 flex flex-col p-6 overflow-y-auto gap-6"
             >
-              <div className="flex items-center gap-2">
-                <span className="w-5 h-5 rounded-full bg-blue-900/50 border border-blue-700/50 flex items-center justify-center font-mono text-[10px] text-blue-400">{sceneId}</span>
-                <span className="text-[#1a3a5a] font-mono text-[9px] uppercase tracking-widest">{sceneId} of 5</span>
+              {/* Scene counter */}
+              <div className="flex items-center gap-2.5">
+                <span className="w-6 h-6 rounded-full bg-blue-900/50 border border-blue-600/50 flex items-center justify-center font-mono text-xs text-blue-300 font-bold">{sceneId}</span>
+                <span className="text-blue-400/50 font-mono text-[11px] uppercase tracking-widest">{sceneId} of 5</span>
               </div>
 
+              {/* The Question */}
               <div>
-                <p className="text-[#1a3a5a] font-mono text-[9px] uppercase tracking-widest mb-1.5">The Question</p>
-                <h2 className="text-white text-sm font-semibold leading-snug">{sceneData.question}</h2>
+                <p className="text-blue-400/50 font-mono text-[11px] uppercase tracking-widest mb-2">The Question</p>
+                <h2 className="text-white text-xl font-semibold leading-snug">{sceneData.question}</h2>
               </div>
 
-              <div className="border-l-2 border-blue-700/40 pl-3">
-                <p className="text-[#1a3a5a] font-mono text-[9px] uppercase tracking-widest mb-1.5">Feynman Said</p>
-                <blockquote className="text-[#2a4a70] font-mono text-[10px] italic leading-relaxed mb-1">{sceneData.quote}</blockquote>
-                <cite className="text-[#142030] font-mono text-[9px] not-italic">{sceneData.author}</cite>
+              {/* Feynman Quote */}
+              <div className="border-l-2 border-blue-500/30 pl-4">
+                <p className="text-blue-400/50 font-mono text-[11px] uppercase tracking-widest mb-2">Feynman Said</p>
+                <blockquote className="text-white/65 text-sm italic leading-relaxed mb-2">{sceneData.quote}</blockquote>
+                <cite className="text-white/25 font-mono text-xs not-italic">{sceneData.author}</cite>
               </div>
 
+              {/* How It Works */}
               <div>
-                <p className="text-[#1a3a5a] font-mono text-[9px] uppercase tracking-widest mb-2.5">How It Works</p>
-                <div className="space-y-4">
+                <p className="text-blue-400/50 font-mono text-[11px] uppercase tracking-widest mb-3">How It Works</p>
+                <div className="space-y-5">
                   {sceneData.steps.map((step, i) => (
                     <div key={i} className="flex gap-3">
-                      <span className="text-[#2255aa] font-mono text-[10px] font-bold shrink-0 mt-0.5 w-5 text-right">{String(i + 1).padStart(2, '0')}</span>
+                      <span className="text-blue-400/60 font-mono text-xs font-bold shrink-0 mt-0.5 w-5 text-right">{String(i + 1).padStart(2, '0')}</span>
                       <div>
-                        <p className="text-[#4488cc] font-mono text-[10px] font-semibold mb-0.5">{step.label}</p>
-                        <p className="text-[#2a4060] font-mono text-[10px] leading-relaxed">{step.text}</p>
+                        <p className="text-[#4da3ff] text-sm font-semibold mb-1">{step.label}</p>
+                        <p className="text-white/60 text-sm leading-relaxed">{step.text}</p>
                       </div>
                     </div>
                   ))}
                 </div>
               </div>
 
-              <div className="bg-[#060f1e] border border-blue-900/40 rounded-lg p-3 mt-auto">
-                <div className="flex items-center gap-1.5 mb-1.5">
-                  <span className="text-blue-500 text-[10px]">✦</span>
-                  <span className="text-blue-500 font-mono text-[9px] uppercase tracking-widest">Key Insight</span>
+              {/* Key Insight */}
+              <div className="bg-blue-950/40 border border-blue-700/30 rounded-xl p-4 mt-auto">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="text-blue-400 text-sm">✦</span>
+                  <span className="text-blue-400 font-mono text-[11px] uppercase tracking-widest">Key Insight</span>
                 </div>
-                <p className="text-blue-300/60 font-mono text-[10px] leading-relaxed">{sceneData.insight}</p>
+                <p className="text-blue-200/80 text-sm leading-relaxed">{sceneData.insight}</p>
               </div>
             </motion.div>
           </AnimatePresence>
 
+          {/* Scene 2 legend */}
           {sceneId === 2 && (
-            <motion.div initial={{opacity:0}} animate={{opacity:1}} className="border-t border-[#0d1e35] p-4">
-              <p className="text-[#1a3a5a] font-mono text-[9px] uppercase tracking-widest mb-2">Legend</p>
-              <div className="space-y-1.5 font-mono text-[10px]">
-                <div className="flex items-center gap-2"><span className="w-2.5 h-2.5 rounded-full bg-[#ff3300] shrink-0"/><span className="text-[#884433]">O — Oxygen (δ⁻, larger)</span></div>
-                <div className="flex items-center gap-2"><span className="w-2.5 h-2.5 rounded-full bg-[#ddf4ff] shrink-0"/><span className="text-[#6688aa]">H — Hydrogen (δ⁺, smaller)</span></div>
-                <div className="flex items-center gap-2"><span className="w-4 h-px bg-[#ffee44] shrink-0"/><span className="text-[#665522]">Covalent bond</span></div>
-                <div className="mt-1 text-[#1a2a3a]">Labels float in 3D space. Click any atom to explore.</div>
+            <motion.div initial={{opacity:0}} animate={{opacity:1}} className="border-t border-[#0d1e35] p-5">
+              <p className="text-blue-400/50 font-mono text-[11px] uppercase tracking-widest mb-3">Legend</p>
+              <div className="space-y-2 text-sm">
+                <div className="flex items-center gap-2.5"><span className="w-3 h-3 rounded-full bg-[#ff3300] shrink-0"/><span className="text-white/65">O — Oxygen (δ⁻, larger)</span></div>
+                <div className="flex items-center gap-2.5"><span className="w-3 h-3 rounded-full bg-[#ddf4ff] shrink-0"/><span className="text-white/65">H — Hydrogen (δ⁺, smaller)</span></div>
+                <div className="flex items-center gap-2.5"><span className="w-5 h-px bg-[#ffee44] shrink-0"/><span className="text-white/65">Covalent bond</span></div>
+                <p className="text-white/35 text-xs mt-1">Click any atom to explore its properties.</p>
               </div>
             </motion.div>
           )}
@@ -811,9 +817,9 @@ export default function Cap1Experience() {
             {/* Avg speed readout — Scene 1 only */}
             {sceneId === 1 && (
               <div className="absolute top-4 right-4 text-right pointer-events-none">
-                <p className="text-[#1a3050] font-mono text-[9px] uppercase tracking-widest">Avg. atom speed</p>
-                <p className="text-white font-mono text-lg font-bold leading-none"><span ref={speedDisplayRef}>—</span></p>
-                <p className="text-[#1a3050] font-mono text-[9px]">× 10⁻⁴ u/s = temperature</p>
+                <p className="text-white/35 font-mono text-[11px] uppercase tracking-widest">Avg. atom speed</p>
+                <p className="text-white font-mono text-2xl font-bold leading-none"><span ref={speedDisplayRef}>—</span></p>
+                <p className="text-white/30 font-mono text-[11px]">× 10⁻⁴ u/s = temperature</p>
               </div>
             )}
 
@@ -825,14 +831,14 @@ export default function Cap1Experience() {
                   exit={{ opacity: 0, y: -10 }} transition={{ delay: 0.8, duration: 0.4 }}
                   className="absolute top-4 left-1/2 -translate-x-1/2 z-10"
                 >
-                  <div className="bg-[#040c1a]/96 border border-blue-700/40 rounded-xl px-5 py-3.5 backdrop-blur-sm text-center shadow-2xl">
-                    <p className="text-[#2a4a6a] font-mono text-[9px] uppercase tracking-widest mb-1.5">Predict first</p>
-                    <p className="text-white font-mono text-xs mb-3">What happens when atoms are heated?</p>
-                    <div className="flex gap-2 justify-center">
-                      <button onClick={() => handlePOE(true)} className="px-3 py-1.5 rounded-lg border border-blue-600/50 text-blue-300 font-mono text-[10px] hover:bg-blue-900/30 transition-colors">
+                  <div className="bg-[#040c1a]/96 border border-blue-700/40 rounded-xl px-6 py-4 backdrop-blur-sm text-center shadow-2xl">
+                    <p className="text-blue-400/60 font-mono text-[11px] uppercase tracking-widest mb-2">Predict first</p>
+                    <p className="text-white text-sm font-medium mb-4">What happens when atoms are heated?</p>
+                    <div className="flex gap-2.5 justify-center">
+                      <button onClick={() => handlePOE(true)} className="px-4 py-2 rounded-lg border border-blue-600/50 text-blue-200 text-sm hover:bg-blue-900/30 transition-colors">
                         They move faster
                       </button>
-                      <button onClick={() => handlePOE(false)} className="px-3 py-1.5 rounded-lg border border-[#1a3050]/50 text-[#2a4060] font-mono text-[10px] hover:bg-[#0a1a30] transition-colors">
+                      <button onClick={() => handlePOE(false)} className="px-4 py-2 rounded-lg border border-white/15 text-white/45 text-sm hover:bg-white/5 transition-colors">
                         They change chemistry
                       </button>
                     </div>
@@ -863,11 +869,11 @@ export default function Cap1Experience() {
               {atomInfo && (
                 <motion.div
                   initial={{ opacity: 0, x: 10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 10 }}
-                  className="absolute top-1/2 right-4 -translate-y-1/2 w-56 bg-[#040c1a]/96 border border-blue-800/40 rounded-xl p-4 backdrop-blur-sm"
+                  className="absolute top-1/2 right-4 -translate-y-1/2 w-72 bg-[#040c1a]/96 border border-blue-700/40 rounded-xl p-5 backdrop-blur-sm shadow-2xl"
                 >
-                  <p className="text-blue-400 font-mono text-[10px] uppercase tracking-widest mb-2">{atomInfo.name}</p>
-                  <p className="text-[#2a4a6a] font-mono text-[10px] leading-relaxed whitespace-pre-line">{atomInfo.detail}</p>
-                  <button onClick={() => setAtomInfo(null)} className="mt-3 text-[#1a3060] hover:text-white font-mono text-[9px] uppercase tracking-widest transition-colors">× close</button>
+                  <p className="text-[#4da3ff] font-mono text-xs uppercase tracking-widest mb-2">{atomInfo.name}</p>
+                  <p className="text-white/65 text-sm leading-relaxed whitespace-pre-line">{atomInfo.detail}</p>
+                  <button onClick={() => setAtomInfo(null)} className="mt-4 text-white/25 hover:text-white font-mono text-xs uppercase tracking-widest transition-colors">× close</button>
                 </motion.div>
               )}
             </AnimatePresence>
@@ -878,10 +884,10 @@ export default function Cap1Experience() {
 
             {sceneData.control === 'slider' && (
               <div className="w-full max-w-md">
-                <div className="flex justify-between font-mono text-[9px] mb-1 px-0.5">
-                  <span className="text-blue-400/60 uppercase tracking-widest">{sceneId === 3 ? '❄ ICE' : '❄ SOLID'}</span>
+                <div className="flex justify-between font-mono text-xs mb-1.5 px-0.5">
+                  <span className="text-blue-400/70 uppercase tracking-widest">{sceneId === 3 ? '❄ ICE' : '❄ SOLID'}</span>
                   <span className="text-white font-bold">{temp}°</span>
-                  <span className="text-orange-400/60 uppercase tracking-widest">{sceneId === 3 ? 'STEAM ♨' : 'GAS ♨'}</span>
+                  <span className="text-orange-400/70 uppercase tracking-widest">{sceneId === 3 ? 'STEAM ♨' : 'GAS ♨'}</span>
                 </div>
                 {/* Slider with precise transition markers */}
                 <div className="relative">
@@ -897,11 +903,11 @@ export default function Cap1Experience() {
                     <div className="w-px h-2 bg-orange-500/50 mt-1" />
                   </div>
                 </div>
-                <div className="flex justify-between font-mono text-[9px] mt-1 px-0.5">
-                  <span className="text-[#0d1e35]">0°</span>
-                  <span className="text-cyan-500/40 tracking-widest" style={{ marginLeft: '22%' }}>│ 30° MELT</span>
-                  <span className="text-orange-500/40 tracking-widest">65° BOIL │</span>
-                  <span className="text-[#0d1e35]">100°</span>
+                <div className="flex justify-between font-mono text-xs mt-1.5 px-0.5">
+                  <span className="text-white/20">0°</span>
+                  <span className="text-cyan-400/60 tracking-widest" style={{ marginLeft: '22%' }}>│ 30° MELT</span>
+                  <span className="text-orange-400/60 tracking-widest">65° BOIL │</span>
+                  <span className="text-white/20">100°</span>
                 </div>
               </div>
             )}
@@ -909,10 +915,10 @@ export default function Cap1Experience() {
             {sceneData.control === 'button' && (
               <div className="flex items-center gap-6">
                 <div className="text-right">
-                  <p className="text-[#1a3050] font-mono text-[9px]">
+                  <p className="text-white/50 font-mono text-xs">
                     {sceneId === 4 ? 'H₂ (cyan) + O₂ (red)' : 'NaCl crystal + H₂O (blue)'}
                   </p>
-                  <p className="text-[#2a4060] font-mono text-[9px]">
+                  <p className="text-white/35 font-mono text-xs">
                     {sceneId === 4 ? 'React to form H₂O' : 'Water pulls ions apart'}
                   </p>
                 </div>
@@ -942,7 +948,7 @@ export default function Cap1Experience() {
             )}
 
             {sceneData.control === 'none' && (
-              <p className="text-[#1a3050] font-mono text-[10px] uppercase tracking-widest">Click any atom to explore · Drag to rotate · Scroll to zoom</p>
+              <p className="text-white/35 font-mono text-xs uppercase tracking-widest">Click any atom to explore · Drag to rotate · Scroll to zoom</p>
             )}
           </div>
         </div>
