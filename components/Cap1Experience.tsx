@@ -991,51 +991,96 @@ export default function Cap1Experience() {
       <AnimatePresence>
         {showFeynman && (
           <motion.div
-            initial={{ opacity: 0, x: 32 }} animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: 32 }} transition={{ duration: 0.25, ease: 'easeOut' }}
-            className="absolute top-12 right-0 bottom-20 w-80 z-30 flex flex-col rounded-l-2xl overflow-hidden"
-            style={{ background: 'rgba(4,8,18,0.97)', borderLeft: '1px solid rgba(255,255,255,0.07)', borderTop: '1px solid rgba(255,255,255,0.07)', backdropFilter: 'blur(20px)' }}
+            initial={{ opacity: 0, x: 40 }} animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: 40 }} transition={{ duration: 0.28, ease: 'easeOut' }}
+            className="absolute top-12 right-0 bottom-20 w-[420px] z-30 flex flex-col overflow-hidden"
+            style={{ background: 'rgba(4,8,20,0.98)', borderLeft: '1px solid rgba(255,255,255,0.06)', backdropFilter: 'blur(24px)' }}
           >
-            <div className="flex items-center justify-between px-5 py-4 border-b border-white/5">
-              <p className="text-[#4da3ff] font-mono text-[10px] uppercase tracking-widest">Feynman on this</p>
-              <button onClick={() => setShowFeynman(false)} className="text-white/25 hover:text-white/70 text-lg leading-none transition-colors">×</button>
-            </div>
-            <div className="flex-1 overflow-y-auto p-5 flex flex-col gap-5">
-              {/* Quote */}
-              <div className="border-l-2 border-[#4da3ff]/30 pl-4">
-                <blockquote className="text-white/70 text-sm italic leading-relaxed">{sceneData.quote}</blockquote>
-                <cite className="text-white/25 font-mono text-[10px] not-italic block mt-2">{sceneData.author}</cite>
-              </div>
-              {/* Steps */}
+            {/* Panel header */}
+            <div className="flex items-center justify-between px-7 py-5" style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
               <div>
-                <p className="text-[#4da3ff]/50 font-mono text-[10px] uppercase tracking-widest mb-3">How It Works</p>
-                <div className="flex flex-col gap-4">
+                <p className="text-[#4da3ff] font-mono text-[10px] uppercase tracking-widest mb-0.5">Feynman on this</p>
+                <p className="text-white/50 text-xs">{sceneData.nav}</p>
+              </div>
+              <button onClick={() => setShowFeynman(false)}
+                className="w-7 h-7 rounded-full flex items-center justify-center text-white/30 hover:text-white/80 hover:bg-white/8 transition-all text-base">
+                ×
+              </button>
+            </div>
+
+            <div className="flex-1 overflow-y-auto">
+
+              {/* Quote block */}
+              <div className="px-7 py-6" style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                <div className="flex gap-4">
+                  <div className="w-0.5 shrink-0 rounded-full bg-[#4da3ff]/35 self-stretch" />
+                  <div>
+                    <blockquote className="text-white/75 leading-relaxed italic"
+                      style={{ fontSize: '13px', lineHeight: '1.75' }}>
+                      {sceneData.quote}
+                    </blockquote>
+                    <cite className="text-white/25 font-mono text-[10px] not-italic block mt-3">
+                      {sceneData.author}
+                    </cite>
+                  </div>
+                </div>
+              </div>
+
+              {/* How it works */}
+              <div className="px-7 py-6" style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                <p className="text-[#4da3ff]/50 font-mono text-[10px] uppercase tracking-widest mb-5">How It Works</p>
+                <div className="flex flex-col gap-6">
                   {sceneData.steps.map((step, i) => (
-                    <div key={i} className="flex gap-3">
-                      <span className="text-[#4da3ff]/40 font-mono text-[10px] font-bold shrink-0 mt-0.5">{String(i+1).padStart(2,'0')}</span>
+                    <div key={i} className="flex gap-4">
+                      <span className="text-[#4da3ff]/35 font-mono text-[10px] font-bold shrink-0 mt-0.5 w-4">
+                        {String(i+1).padStart(2,'0')}
+                      </span>
                       <div>
-                        <p className="text-[#4da3ff] text-sm font-semibold mb-1">{step.label}</p>
-                        <p className="text-white/55 text-sm leading-relaxed">{step.text}</p>
+                        <p className="text-[#4da3ff] text-sm font-semibold mb-1.5">{step.label}</p>
+                        <p className="text-white/55 leading-relaxed" style={{ fontSize: '13px', lineHeight: '1.7' }}>
+                          {step.text}
+                        </p>
                       </div>
                     </div>
                   ))}
                 </div>
               </div>
+
               {/* Key insight */}
-              <div className="rounded-xl p-4 mt-auto" style={{ background: 'rgba(20,50,100,0.35)', border: '1px solid rgba(77,163,255,0.18)' }}>
-                <p className="text-[#4da3ff] font-mono text-[10px] uppercase tracking-widest mb-2">✦ Key Insight</p>
-                <p className="text-blue-100/70 text-sm leading-relaxed">{sceneData.insight}</p>
+              <div className="px-7 py-6" style={{ borderBottom: sceneId === 2 ? '1px solid rgba(255,255,255,0.05)' : 'none' }}>
+                <div className="flex items-center gap-2 mb-3">
+                  <span className="text-[#4da3ff] text-xs">✦</span>
+                  <p className="text-[#4da3ff] font-mono text-[10px] uppercase tracking-widest">Key Insight</p>
+                </div>
+                <div className="rounded-xl p-4" style={{ background: 'rgba(15,35,80,0.5)', border: '1px solid rgba(77,163,255,0.15)' }}>
+                  <p className="text-blue-100/70 leading-relaxed" style={{ fontSize: '13px', lineHeight: '1.7' }}>
+                    {sceneData.insight}
+                  </p>
+                </div>
               </div>
+
               {/* Scene 2 legend */}
               {sceneId === 2 && (
-                <div className="flex flex-col gap-2">
-                  <p className="text-[#4da3ff]/50 font-mono text-[10px] uppercase tracking-widest mb-1">Legend</p>
-                  <div className="flex items-center gap-2 text-sm"><span className="w-2.5 h-2.5 rounded-full bg-[#ff3300] shrink-0"/><span className="text-white/55">O — Oxygen (δ⁻)</span></div>
-                  <div className="flex items-center gap-2 text-sm"><span className="w-2.5 h-2.5 rounded-full bg-[#ddf4ff] shrink-0"/><span className="text-white/55">H — Hydrogen (δ⁺)</span></div>
-                  <div className="flex items-center gap-2 text-sm"><span className="w-4 h-px bg-[#ffee44] shrink-0"/><span className="text-white/55">Covalent bond</span></div>
-                  <p className="text-white/30 text-xs">Click any atom to explore.</p>
+                <div className="px-7 py-6">
+                  <p className="text-[#4da3ff]/50 font-mono text-[10px] uppercase tracking-widest mb-4">Legend</p>
+                  <div className="flex flex-col gap-3">
+                    <div className="flex items-center gap-3">
+                      <span className="w-3 h-3 rounded-full bg-[#ff3300] shrink-0"/>
+                      <span className="text-white/60" style={{ fontSize: '13px' }}>O — Oxygen (δ⁻, electronegative)</span>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <span className="w-3 h-3 rounded-full bg-[#ddf4ff] shrink-0"/>
+                      <span className="text-white/60" style={{ fontSize: '13px' }}>H — Hydrogen (δ⁺, positive pole)</span>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <span className="w-5 h-px bg-[#ffee44] shrink-0"/>
+                      <span className="text-white/60" style={{ fontSize: '13px' }}>Covalent bond</span>
+                    </div>
+                    <p className="text-white/30 text-xs mt-1">Click any atom to explore its properties.</p>
+                  </div>
                 </div>
               )}
+
             </div>
           </motion.div>
         )}
