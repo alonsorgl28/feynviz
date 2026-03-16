@@ -504,6 +504,7 @@ export default function Cap1Experience() {
   const idleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const orbitAngleRef = useRef(0.5);
 
+  const [panelOpen, setPanelOpen] = useState(true);
   const [sceneId, setSceneId] = useState<SceneId>(1);
   const [temp, setTemp] = useState(15);
   const [atomInfo, setAtomInfo] = useState<{ name: string; detail: string } | null>(null);
@@ -671,22 +672,28 @@ export default function Cap1Experience() {
   const nextScene = sceneId < 5 ? SCENES.find(s => s.id === sceneId + 1) : null;
 
   return (
-    <div className="w-screen h-screen flex flex-col bg-[#03040c] overflow-hidden">
+    <div className="w-screen h-screen bg-[#03040c] overflow-hidden relative">
 
-      {/* ── Header ── */}
-      <header className="h-11 flex items-center justify-between px-5 border-b border-[#0d1e35] shrink-0 bg-[#040810]">
+      {/* ── Simulation fills the entire screen ── */}
+      <div ref={mountRef} className="absolute inset-0" />
+
+      {/* ── Header overlay ── */}
+      <header className="absolute top-0 left-0 right-0 h-11 flex items-center justify-between px-5 z-20"
+        style={{ background: 'linear-gradient(to bottom, rgba(4,8,16,0.92) 0%, transparent 100%)' }}>
         <div className="flex items-center gap-3">
-          <a href="/" className="text-[#1a3a5a] font-mono text-[11px] hover:text-blue-400 transition-colors">← Back</a>
-          <span className="text-[#0d1e35]">·</span>
-          <span className="text-[#2a4a6a] font-mono text-[11px]">Six Easy Pieces</span>
-          <span className="text-[#0d1e35]">·</span>
-          <span className="text-white font-mono text-[11px]">Chapter 1 — Atoms in Motion</span>
+          <a href="/" className="text-white/40 font-mono text-[11px] hover:text-white/80 transition-colors">← Back</a>
+          <span className="text-white/15">·</span>
+          <span className="text-white/30 font-mono text-[11px]">Six Easy Pieces</span>
+          <span className="text-white/15">·</span>
+          <span className="text-white/60 font-mono text-[11px]">Chapter 1 — Atoms in Motion</span>
         </div>
         <nav className="flex gap-1">
           {SCENES.map(s => (
             <button key={s.id} onClick={() => goScene(s.id as SceneId)}
               className={`px-2.5 py-1 rounded font-mono text-[10px] uppercase tracking-wider transition-all ${
-                sceneId === s.id ? 'bg-[#0a1a3a] border border-blue-500/50 text-blue-300' : 'text-[#1a3050] hover:text-[#4a7aaa] border border-transparent'
+                sceneId === s.id
+                  ? 'bg-blue-900/60 border border-blue-500/50 text-blue-300'
+                  : 'text-white/25 hover:text-white/60 border border-transparent'
               }`}>
               {s.id}. {s.nav}
             </button>
@@ -694,265 +701,283 @@ export default function Cap1Experience() {
         </nav>
       </header>
 
-      {/* ── Body ── */}
-      <div className="flex flex-1 overflow-hidden">
+      {/* ── Floating info panel (left) ── */}
+      <div className="absolute left-4 z-20 flex items-start gap-2"
+        style={{ top: '56px', bottom: '100px' }}>
 
-        {/* ── Left Sidebar ── */}
-        <aside className="w-96 shrink-0 bg-[#040810] border-r border-[#0d1e35] flex flex-col overflow-hidden">
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={sceneId}
-              initial={{ opacity: 0, x: -12 }}
+        <AnimatePresence>
+          {panelOpen && (
+            <motion.aside
+              initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: 12 }}
-              transition={{ duration: 0.22, ease: 'easeInOut' }}
-              className="flex-1 flex flex-col p-6 overflow-y-auto gap-6"
+              exit={{ opacity: 0, x: -20 }}
+              transition={{ duration: 0.25, ease: 'easeOut' }}
+              className="w-80 h-full flex flex-col rounded-2xl overflow-hidden"
+              style={{ background: 'rgba(4,8,16,0.82)', backdropFilter: 'blur(16px)', border: '1px solid rgba(255,255,255,0.07)' }}
             >
-              {/* Scene counter */}
-              <div className="flex items-center gap-2.5">
-                <span className="w-6 h-6 rounded-full bg-blue-900/50 border border-blue-600/50 flex items-center justify-center font-mono text-xs text-blue-300 font-bold">{sceneId}</span>
-                <span className="text-blue-400/50 font-mono text-[11px] uppercase tracking-widest">{sceneId} of 5</span>
-              </div>
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={sceneId}
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -8 }}
+                  transition={{ duration: 0.2 }}
+                  className="flex-1 flex flex-col p-5 overflow-y-auto gap-5"
+                >
+                  {/* Scene counter */}
+                  <div className="flex items-center gap-2">
+                    <span className="w-6 h-6 rounded-full bg-blue-900/60 border border-blue-500/50 flex items-center justify-center font-mono text-xs text-blue-300 font-bold">{sceneId}</span>
+                    <span className="text-white/30 font-mono text-[11px] uppercase tracking-widest">{sceneId} of 5</span>
+                  </div>
 
-              {/* The Question */}
-              <div>
-                <p className="text-blue-400/50 font-mono text-[11px] uppercase tracking-widest mb-2">The Question</p>
-                <h2 className="text-white text-xl font-semibold leading-snug">{sceneData.question}</h2>
-              </div>
+                  {/* The Question */}
+                  <div>
+                    <p className="text-[#4da3ff]/60 font-mono text-[10px] uppercase tracking-widest mb-1.5">The Question</p>
+                    <h2 className="text-white text-lg font-semibold leading-snug">{sceneData.question}</h2>
+                  </div>
 
-              {/* Feynman Quote */}
-              <div className="border-l-2 border-blue-500/30 pl-4">
-                <p className="text-blue-400/50 font-mono text-[11px] uppercase tracking-widest mb-2">Feynman Said</p>
-                <blockquote className="text-white/65 text-sm italic leading-relaxed mb-2">{sceneData.quote}</blockquote>
-                <cite className="text-white/25 font-mono text-xs not-italic">{sceneData.author}</cite>
-              </div>
+                  {/* Feynman Quote */}
+                  <div className="border-l-2 border-blue-500/25 pl-3">
+                    <p className="text-[#4da3ff]/50 font-mono text-[10px] uppercase tracking-widest mb-1.5">Feynman Said</p>
+                    <blockquote className="text-white/60 text-sm italic leading-relaxed mb-1.5">{sceneData.quote}</blockquote>
+                    <cite className="text-white/20 font-mono text-[10px] not-italic">{sceneData.author}</cite>
+                  </div>
 
-              {/* How It Works */}
-              <div>
-                <p className="text-blue-400/50 font-mono text-[11px] uppercase tracking-widest mb-3">How It Works</p>
-                <div className="space-y-5">
-                  {sceneData.steps.map((step, i) => (
-                    <div key={i} className="flex gap-3">
-                      <span className="text-blue-400/60 font-mono text-xs font-bold shrink-0 mt-0.5 w-5 text-right">{String(i + 1).padStart(2, '0')}</span>
-                      <div>
-                        <p className="text-[#4da3ff] text-sm font-semibold mb-1">{step.label}</p>
-                        <p className="text-white/60 text-sm leading-relaxed">{step.text}</p>
+                  {/* How It Works */}
+                  <div>
+                    <p className="text-[#4da3ff]/50 font-mono text-[10px] uppercase tracking-widest mb-3">How It Works</p>
+                    <div className="space-y-4">
+                      {sceneData.steps.map((step, i) => (
+                        <div key={i} className="flex gap-3">
+                          <span className="text-blue-400/50 font-mono text-[10px] font-bold shrink-0 mt-0.5">{String(i + 1).padStart(2, '0')}</span>
+                          <div>
+                            <p className="text-[#4da3ff] text-sm font-semibold mb-1">{step.label}</p>
+                            <p className="text-white/55 text-sm leading-relaxed">{step.text}</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Key Insight */}
+                  <div className="mt-auto rounded-xl p-3.5" style={{ background: 'rgba(30,60,120,0.25)', border: '1px solid rgba(77,163,255,0.2)' }}>
+                    <div className="flex items-center gap-1.5 mb-1.5">
+                      <span className="text-[#4da3ff] text-xs">✦</span>
+                      <span className="text-[#4da3ff] font-mono text-[10px] uppercase tracking-widest">Key Insight</span>
+                    </div>
+                    <p className="text-blue-100/75 text-sm leading-relaxed">{sceneData.insight}</p>
+                  </div>
+
+                  {/* Scene 2 legend */}
+                  {sceneId === 2 && (
+                    <div className="rounded-xl p-3.5" style={{ border: '1px solid rgba(255,255,255,0.06)', background: 'rgba(255,255,255,0.02)' }}>
+                      <p className="text-[#4da3ff]/50 font-mono text-[10px] uppercase tracking-widest mb-2.5">Legend</p>
+                      <div className="space-y-2 text-sm">
+                        <div className="flex items-center gap-2"><span className="w-2.5 h-2.5 rounded-full bg-[#ff3300] shrink-0"/><span className="text-white/60">O — Oxygen (δ⁻)</span></div>
+                        <div className="flex items-center gap-2"><span className="w-2.5 h-2.5 rounded-full bg-[#ddf4ff] shrink-0"/><span className="text-white/60">H — Hydrogen (δ⁺)</span></div>
+                        <div className="flex items-center gap-2"><span className="w-4 h-px bg-[#ffee44] shrink-0"/><span className="text-white/60">Covalent bond</span></div>
+                        <p className="text-white/30 text-xs mt-1">Click any atom to explore.</p>
                       </div>
                     </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Key Insight */}
-              <div className="bg-blue-950/40 border border-blue-700/30 rounded-xl p-4 mt-auto">
-                <div className="flex items-center gap-2 mb-2">
-                  <span className="text-blue-400 text-sm">✦</span>
-                  <span className="text-blue-400 font-mono text-[11px] uppercase tracking-widest">Key Insight</span>
-                </div>
-                <p className="text-blue-200/80 text-sm leading-relaxed">{sceneData.insight}</p>
-              </div>
-            </motion.div>
-          </AnimatePresence>
-
-          {/* Scene 2 legend */}
-          {sceneId === 2 && (
-            <motion.div initial={{opacity:0}} animate={{opacity:1}} className="border-t border-[#0d1e35] p-5">
-              <p className="text-blue-400/50 font-mono text-[11px] uppercase tracking-widest mb-3">Legend</p>
-              <div className="space-y-2 text-sm">
-                <div className="flex items-center gap-2.5"><span className="w-3 h-3 rounded-full bg-[#ff3300] shrink-0"/><span className="text-white/65">O — Oxygen (δ⁻, larger)</span></div>
-                <div className="flex items-center gap-2.5"><span className="w-3 h-3 rounded-full bg-[#ddf4ff] shrink-0"/><span className="text-white/65">H — Hydrogen (δ⁺, smaller)</span></div>
-                <div className="flex items-center gap-2.5"><span className="w-5 h-px bg-[#ffee44] shrink-0"/><span className="text-white/65">Covalent bond</span></div>
-                <p className="text-white/35 text-xs mt-1">Click any atom to explore its properties.</p>
-              </div>
-            </motion.div>
-          )}
-        </aside>
-
-        {/* ── Canvas + Controls ── */}
-        <div className="flex-1 flex flex-col">
-
-          <div className="flex-1 relative">
-            <div ref={mountRef} className="absolute inset-0" />
-
-            {/* Drag hint */}
-            <AnimatePresence>
-              {showDragHint && (
-                <motion.div
-                  initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0 }} transition={{ delay: 1.5, duration: 0.5 }}
-                  className="absolute bottom-4 left-1/2 -translate-x-1/2 pointer-events-none"
-                >
-                  <div className="flex items-center gap-2 bg-[#060d1a]/80 border border-[#1a3a6a]/40 rounded-full px-4 py-2 backdrop-blur-sm">
-                    <span className="text-[#2255aa] text-sm">⟳</span>
-                    <span className="text-[#2255aa] font-mono text-[10px] uppercase tracking-widest">Drag to rotate · Scroll to zoom</span>
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
-
-            {/* Transition flash */}
-            <AnimatePresence>
-              {transitionText && (
-                <motion.div
-                  initial={{ opacity: 0, scale: 0.85 }} animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 1.1 }} transition={{ duration: 0.3 }}
-                  className="absolute inset-0 flex items-center justify-center pointer-events-none"
-                >
-                  <div className="font-mono text-3xl font-bold tracking-widest text-white" style={{ textShadow: '0 0 40px rgba(80,160,255,0.9)' }}>
-                    {transitionText}
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
-
-            {/* State badge */}
-            {stateLabel && (
-              <div className="absolute top-4 left-4 pointer-events-none">
-                <div className={`inline-flex items-center px-3 py-1.5 rounded-lg border font-mono text-xs font-bold tracking-widest ${stateBadge}`}>
-                  {stateLabel}
-                </div>
-              </div>
-            )}
-
-            {/* Avg speed readout — Scene 1 only */}
-            {sceneId === 1 && (
-              <div className="absolute top-4 right-4 text-right pointer-events-none">
-                <p className="text-white/35 font-mono text-[11px] uppercase tracking-widest">Avg. atom speed</p>
-                <p className="text-white font-mono text-2xl font-bold leading-none"><span ref={speedDisplayRef}>—</span></p>
-                <p className="text-white/30 font-mono text-[11px]">× 10⁻⁴ u/s = temperature</p>
-              </div>
-            )}
-
-            {/* POE overlay — Scene 1 only */}
-            <AnimatePresence>
-              {sceneId === 1 && poeVisible && !poeAnswered && (
-                <motion.div
-                  initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -10 }} transition={{ delay: 0.8, duration: 0.4 }}
-                  className="absolute top-4 left-1/2 -translate-x-1/2 z-10"
-                >
-                  <div className="bg-[#040c1a]/96 border border-blue-700/40 rounded-xl px-6 py-4 backdrop-blur-sm text-center shadow-2xl">
-                    <p className="text-blue-400/60 font-mono text-[11px] uppercase tracking-widest mb-2">Predict first</p>
-                    <p className="text-white text-sm font-medium mb-4">What happens when atoms are heated?</p>
-                    <div className="flex gap-2.5 justify-center">
-                      <button onClick={() => handlePOE(true)} className="px-4 py-2 rounded-lg border border-blue-600/50 text-blue-200 text-sm hover:bg-blue-900/30 transition-colors">
-                        They move faster
-                      </button>
-                      <button onClick={() => handlePOE(false)} className="px-4 py-2 rounded-lg border border-white/15 text-white/45 text-sm hover:bg-white/5 transition-colors">
-                        They change chemistry
-                      </button>
-                    </div>
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
-
-            {/* POE answer feedback */}
-            <AnimatePresence>
-              {sceneId === 1 && poeAnswered && poeVisible && (
-                <motion.div
-                  initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.3 }}
-                  className="absolute top-4 left-1/2 -translate-x-1/2 z-10"
-                >
-                  <div className={`bg-[#040c1a]/96 border rounded-xl px-5 py-3 backdrop-blur-sm text-center shadow-2xl ${poeAnswered === 'correct' ? 'border-emerald-600/50' : 'border-orange-600/40'}`}>
-                    <p className={`font-mono text-xs font-bold ${poeAnswered === 'correct' ? 'text-emerald-300' : 'text-orange-300'}`}>
-                      {poeAnswered === 'correct' ? '✓ Correct! Now drag the slider to see it.' : 'Not quite — drag the slider to find out.'}
-                    </p>
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
-
-            {/* Atom info popup — Scene 2 */}
-            <AnimatePresence>
-              {atomInfo && (
-                <motion.div
-                  initial={{ opacity: 0, x: 10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 10 }}
-                  className="absolute top-1/2 right-4 -translate-y-1/2 w-72 bg-[#040c1a]/96 border border-blue-700/40 rounded-xl p-5 backdrop-blur-sm shadow-2xl"
-                >
-                  <p className="text-[#4da3ff] font-mono text-xs uppercase tracking-widest mb-2">{atomInfo.name}</p>
-                  <p className="text-white/65 text-sm leading-relaxed whitespace-pre-line">{atomInfo.detail}</p>
-                  <button onClick={() => setAtomInfo(null)} className="mt-4 text-white/25 hover:text-white font-mono text-xs uppercase tracking-widest transition-colors">× close</button>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
-
-          {/* ── Controls bar ── */}
-          <div className="h-20 bg-[#040810] border-t border-[#0d1e35] flex items-center justify-center px-8 gap-8 shrink-0">
-
-            {sceneData.control === 'slider' && (
-              <div className="w-full max-w-md">
-                <div className="flex justify-between font-mono text-xs mb-1.5 px-0.5">
-                  <span className="text-blue-400/70 uppercase tracking-widest">{sceneId === 3 ? '❄ ICE' : '❄ SOLID'}</span>
-                  <span className="text-white font-bold">{temp}°</span>
-                  <span className="text-orange-400/70 uppercase tracking-widest">{sceneId === 3 ? 'STEAM ♨' : 'GAS ♨'}</span>
-                </div>
-                {/* Slider with precise transition markers */}
-                <div className="relative">
-                  <input type="range" min={0} max={100} value={temp} onChange={e => handleTempChange(Number(e.target.value))}
-                    style={{ background: `linear-gradient(to right,#1a55cc 0%,#22aaff ${temp*.35}%,#44ffaa ${temp*.65}%,#ffaa22 ${temp*.9}%,#ff3300 100%)` }}
-                  />
-                  {/* MELT marker at 30% */}
-                  <div className="absolute top-0 bottom-0 flex flex-col items-center pointer-events-none" style={{ left: '30%' }}>
-                    <div className="w-px h-2 bg-cyan-500/50 mt-1" />
-                  </div>
-                  {/* BOIL marker at 65% */}
-                  <div className="absolute top-0 bottom-0 flex flex-col items-center pointer-events-none" style={{ left: '65%' }}>
-                    <div className="w-px h-2 bg-orange-500/50 mt-1" />
-                  </div>
-                </div>
-                <div className="flex justify-between font-mono text-xs mt-1.5 px-0.5">
-                  <span className="text-white/20">0°</span>
-                  <span className="text-cyan-400/60 tracking-widest" style={{ marginLeft: '22%' }}>│ 30° MELT</span>
-                  <span className="text-orange-400/60 tracking-widest">65° BOIL │</span>
-                  <span className="text-white/20">100°</span>
-                </div>
-              </div>
-            )}
-
-            {sceneData.control === 'button' && (
-              <div className="flex items-center gap-6">
-                <div className="text-right">
-                  <p className="text-white/50 font-mono text-xs">
-                    {sceneId === 4 ? 'H₂ (cyan) + O₂ (red)' : 'NaCl crystal + H₂O (blue)'}
-                  </p>
-                  <p className="text-white/35 font-mono text-xs">
-                    {sceneId === 4 ? 'React to form H₂O' : 'Water pulls ions apart'}
-                  </p>
-                </div>
-                <button
-                  onClick={() => !buttonDone && !buttonActive && handleRef.current?.triggerAction?.()}
-                  disabled={buttonDone || buttonActive}
-                  className={`px-7 py-2.5 rounded-xl border font-mono text-sm font-bold uppercase tracking-widest transition-all ${
-                    buttonDone ? 'border-emerald-700/40 text-emerald-600/50 cursor-default' :
-                    buttonActive ? 'border-yellow-500/50 text-yellow-400 animate-pulse cursor-default' :
-                    'border-orange-600/50 text-orange-300 bg-orange-900/15 hover:bg-orange-900/30 hover:border-orange-400/70'
-                  }`}>
-                  {buttonDone ? '✓ COMPLETE' : buttonActive ? 'IN PROGRESS...' : buttonLabel}
-                </button>
-                {/* Next scene hint after completion */}
-                <AnimatePresence>
-                  {buttonDone && nextScene && (
-                    <motion.button
-                      initial={{ opacity: 0, x: 8 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0 }}
-                      onClick={() => goScene(nextScene.id as SceneId)}
-                      className="px-4 py-2.5 rounded-xl border border-blue-700/40 text-blue-400/70 font-mono text-[10px] uppercase tracking-widest hover:text-blue-300 hover:border-blue-500/60 transition-all"
-                    >
-                      → {nextScene.nav}
-                    </motion.button>
                   )}
-                </AnimatePresence>
-              </div>
-            )}
+                </motion.div>
+              </AnimatePresence>
+            </motion.aside>
+          )}
+        </AnimatePresence>
 
-            {sceneData.control === 'none' && (
-              <p className="text-white/35 font-mono text-xs uppercase tracking-widest">Click any atom to explore · Drag to rotate · Scroll to zoom</p>
-            )}
+        {/* Panel toggle button */}
+        <button
+          onClick={() => setPanelOpen(o => !o)}
+          className="mt-2 w-7 h-7 rounded-lg flex items-center justify-center transition-all hover:bg-white/10"
+          style={{ background: 'rgba(4,8,16,0.75)', border: '1px solid rgba(255,255,255,0.08)', backdropFilter: 'blur(8px)' }}
+        >
+          <span className="text-white/40 text-xs">{panelOpen ? '‹' : '›'}</span>
+        </button>
+      </div>
+
+      {/* ── Overlays on simulation ── */}
+
+      {/* Drag hint */}
+      <AnimatePresence>
+        {showDragHint && (
+          <motion.div
+            initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0 }} transition={{ delay: 1.5, duration: 0.5 }}
+            className="absolute bottom-24 left-1/2 -translate-x-1/2 pointer-events-none z-10"
+          >
+            <div className="flex items-center gap-2 rounded-full px-4 py-2"
+              style={{ background: 'rgba(6,13,26,0.8)', border: '1px solid rgba(26,58,106,0.4)', backdropFilter: 'blur(8px)' }}>
+              <span className="text-blue-400/60 text-sm">⟳</span>
+              <span className="text-white/35 font-mono text-[11px] uppercase tracking-widest">Drag to rotate · Scroll to zoom</span>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Transition flash */}
+      <AnimatePresence>
+        {transitionText && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.85 }} animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 1.1 }} transition={{ duration: 0.3 }}
+            className="absolute inset-0 flex items-center justify-center pointer-events-none z-10"
+          >
+            <div className="font-mono text-4xl font-bold tracking-widest text-white"
+              style={{ textShadow: '0 0 60px rgba(80,160,255,0.9)' }}>
+              {transitionText}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* State badge */}
+      {stateLabel && (
+        <div className="absolute z-10 pointer-events-none"
+          style={{ top: '56px', left: panelOpen ? '340px' : '56px', transition: 'left 0.25s ease' }}>
+          <div className={`inline-flex items-center px-3 py-1.5 rounded-lg border font-mono text-xs font-bold tracking-widest ${stateBadge}`}>
+            {stateLabel}
           </div>
         </div>
+      )}
+
+      {/* Avg speed readout — Scene 1 only */}
+      {sceneId === 1 && (
+        <div className="absolute top-14 right-4 text-right pointer-events-none z-10">
+          <p className="text-white/30 font-mono text-[10px] uppercase tracking-widest">Avg. atom speed</p>
+          <p className="text-white font-mono text-2xl font-bold leading-none"><span ref={speedDisplayRef}>—</span></p>
+          <p className="text-white/25 font-mono text-[10px]">× 10⁻⁴ u/s = temperature</p>
+        </div>
+      )}
+
+      {/* POE overlay — Scene 1 only */}
+      <AnimatePresence>
+        {sceneId === 1 && poeVisible && !poeAnswered && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }} transition={{ delay: 0.8, duration: 0.4 }}
+            className="absolute top-14 left-1/2 -translate-x-1/2 z-20"
+          >
+            <div className="rounded-xl px-6 py-4 text-center shadow-2xl"
+              style={{ background: 'rgba(4,12,26,0.95)', border: '1px solid rgba(77,130,255,0.35)', backdropFilter: 'blur(12px)' }}>
+              <p className="text-[#4da3ff]/60 font-mono text-[10px] uppercase tracking-widest mb-2">Predict first</p>
+              <p className="text-white text-sm font-medium mb-4">What happens when atoms are heated?</p>
+              <div className="flex gap-2.5 justify-center">
+                <button onClick={() => handlePOE(true)}
+                  className="px-4 py-2 rounded-lg text-blue-200 text-sm transition-colors hover:bg-blue-900/40"
+                  style={{ border: '1px solid rgba(77,130,255,0.45)' }}>
+                  They move faster
+                </button>
+                <button onClick={() => handlePOE(false)}
+                  className="px-4 py-2 rounded-lg text-white/40 text-sm transition-colors hover:bg-white/5"
+                  style={{ border: '1px solid rgba(255,255,255,0.12)' }}>
+                  They change chemistry
+                </button>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* POE answer feedback */}
+      <AnimatePresence>
+        {sceneId === 1 && poeAnswered && poeVisible && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.3 }}
+            className="absolute top-14 left-1/2 -translate-x-1/2 z-20"
+          >
+            <div className={`rounded-xl px-5 py-3 text-center shadow-2xl ${poeAnswered === 'correct' ? 'border-emerald-600/40' : 'border-orange-500/35'}`}
+              style={{ background: 'rgba(4,12,26,0.95)', border: `1px solid ${poeAnswered === 'correct' ? 'rgba(52,211,153,0.4)' : 'rgba(251,146,60,0.35)'}`, backdropFilter: 'blur(12px)' }}>
+              <p className={`text-sm font-semibold ${poeAnswered === 'correct' ? 'text-emerald-300' : 'text-orange-300'}`}>
+                {poeAnswered === 'correct' ? '✓ Correct! Now drag the slider to see it.' : 'Not quite — drag the slider to find out.'}
+              </p>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Atom info popup — Scene 2 */}
+      <AnimatePresence>
+        {atomInfo && (
+          <motion.div
+            initial={{ opacity: 0, x: 10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 10 }}
+            className="absolute top-1/2 right-4 -translate-y-1/2 w-72 rounded-xl p-5 shadow-2xl z-20"
+            style={{ background: 'rgba(4,12,26,0.95)', border: '1px solid rgba(77,130,255,0.3)', backdropFilter: 'blur(12px)' }}
+          >
+            <p className="text-[#4da3ff] font-mono text-xs uppercase tracking-widest mb-2">{atomInfo.name}</p>
+            <p className="text-white/65 text-sm leading-relaxed whitespace-pre-line">{atomInfo.detail}</p>
+            <button onClick={() => setAtomInfo(null)} className="mt-4 text-white/25 hover:text-white/70 font-mono text-xs uppercase tracking-widest transition-colors">× close</button>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ── Controls bar (bottom overlay) ── */}
+      <div className="absolute bottom-0 left-0 right-0 h-20 flex items-center justify-center px-8 gap-8 z-20"
+        style={{ background: 'linear-gradient(to top, rgba(4,8,16,0.92) 0%, transparent 100%)', backdropFilter: 'blur(4px)' }}>
+
+        {sceneData.control === 'slider' && (
+          <div className="w-full max-w-lg">
+            <div className="flex justify-between font-mono text-xs mb-1.5 px-0.5">
+              <span className="text-blue-400/70 uppercase tracking-widest">{sceneId === 3 ? '❄ ICE' : '❄ SOLID'}</span>
+              <span className="text-white font-bold">{temp}°</span>
+              <span className="text-orange-400/70 uppercase tracking-widest">{sceneId === 3 ? 'STEAM ♨' : 'GAS ♨'}</span>
+            </div>
+            <div className="relative">
+              <input type="range" min={0} max={100} value={temp} onChange={e => handleTempChange(Number(e.target.value))}
+                style={{ background: `linear-gradient(to right,#1a55cc 0%,#22aaff ${temp*.35}%,#44ffaa ${temp*.65}%,#ffaa22 ${temp*.9}%,#ff3300 100%)` }}
+              />
+              <div className="absolute top-0 bottom-0 flex flex-col items-center pointer-events-none" style={{ left: '30%' }}>
+                <div className="w-px h-2 bg-cyan-500/50 mt-1" />
+              </div>
+              <div className="absolute top-0 bottom-0 flex flex-col items-center pointer-events-none" style={{ left: '65%' }}>
+                <div className="w-px h-2 bg-orange-500/50 mt-1" />
+              </div>
+            </div>
+            <div className="flex justify-between font-mono text-xs mt-1.5 px-0.5">
+              <span className="text-white/20">0°</span>
+              <span className="text-cyan-400/60 tracking-widest" style={{ marginLeft: '22%' }}>│ 30° MELT</span>
+              <span className="text-orange-400/60 tracking-widest">65° BOIL │</span>
+              <span className="text-white/20">100°</span>
+            </div>
+          </div>
+        )}
+
+        {sceneData.control === 'button' && (
+          <div className="flex items-center gap-6">
+            <div className="text-right">
+              <p className="text-white/50 font-mono text-xs">{sceneId === 4 ? 'H₂ (cyan) + O₂ (red)' : 'NaCl crystal + H₂O (blue)'}</p>
+              <p className="text-white/30 font-mono text-xs">{sceneId === 4 ? 'React to form H₂O' : 'Water pulls ions apart'}</p>
+            </div>
+            <button
+              onClick={() => !buttonDone && !buttonActive && handleRef.current?.triggerAction?.()}
+              disabled={buttonDone || buttonActive}
+              className={`px-7 py-2.5 rounded-xl border font-mono text-sm font-bold uppercase tracking-widest transition-all ${
+                buttonDone ? 'border-emerald-700/40 text-emerald-600/50 cursor-default' :
+                buttonActive ? 'border-yellow-500/50 text-yellow-400 animate-pulse cursor-default' :
+                'border-orange-600/50 text-orange-300 bg-orange-900/15 hover:bg-orange-900/30 hover:border-orange-400/70'
+              }`}>
+              {buttonDone ? '✓ COMPLETE' : buttonActive ? 'IN PROGRESS...' : buttonLabel}
+            </button>
+            <AnimatePresence>
+              {buttonDone && nextScene && (
+                <motion.button
+                  initial={{ opacity: 0, x: 8 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0 }}
+                  onClick={() => goScene(nextScene.id as SceneId)}
+                  className="px-4 py-2.5 rounded-xl border border-blue-700/40 text-blue-400/70 font-mono text-[10px] uppercase tracking-widest hover:text-blue-300 hover:border-blue-500/60 transition-all"
+                >
+                  → {nextScene.nav}
+                </motion.button>
+              )}
+            </AnimatePresence>
+          </div>
+        )}
+
+        {sceneData.control === 'none' && (
+          <p className="text-white/30 font-mono text-xs uppercase tracking-widest">Click any atom to explore · Drag to rotate · Scroll to zoom</p>
+        )}
       </div>
+
     </div>
   );
 }
