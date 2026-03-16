@@ -30,7 +30,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="es">
+    <html lang="en">
       <body className={`${mono.variable} ${heading.variable} ${body.variable} antialiased bg-[#0b0b0b]`}>
         {children}
       </body>
