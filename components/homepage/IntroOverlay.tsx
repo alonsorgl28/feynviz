@@ -255,14 +255,14 @@ export default function IntroOverlay() {
         <h1
           style={{
             fontFamily: 'var(--font-heading)',
-            fontSize: 'clamp(56px, 9vw, 100px)',
+            fontSize: 'clamp(42px, 7vw, 80px)',
             fontWeight: 700,
             color: '#ffffff',
             letterSpacing: '-0.04em',
             lineHeight: 1,
           }}
         >
-          FeynViz
+          Six Easy Pieces
         </h1>
       </div>
 
@@ -292,7 +292,7 @@ export default function IntroOverlay() {
             cursor: 'pointer',
           }}
         >
-          Enter FeynViz →
+          Begin Exploring →
         </button>
       </div>
 
