@@ -701,102 +701,95 @@ export default function Cap1Experience() {
         </nav>
       </header>
 
-      {/* ── Floating info panel (left) ── */}
-      <div className="absolute left-4 z-20 flex items-start gap-2"
-        style={{ top: '56px', bottom: '100px' }}>
+      {/* ── Info card — bottom left ── */}
+      <div className="absolute bottom-24 left-4 z-20 w-80">
+        <AnimatePresence mode="wait">
+          <motion.div key={sceneId} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }}>
 
-        <AnimatePresence>
-          {panelOpen && (
-            <motion.aside
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -20 }}
-              transition={{ duration: 0.25, ease: 'easeOut' }}
-              className="w-80 h-full flex flex-col rounded-2xl overflow-hidden"
-              style={{ background: 'rgba(4,8,16,0.82)', backdropFilter: 'blur(16px)', border: '1px solid rgba(255,255,255,0.07)' }}
-            >
-              <AnimatePresence mode="wait">
+            {/* Expanded content — slides up */}
+            <AnimatePresence>
+              {panelOpen && (
                 <motion.div
-                  key={sceneId}
-                  initial={{ opacity: 0, y: 8 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -8 }}
-                  transition={{ duration: 0.2 }}
-                  className="flex-1 flex flex-col p-5 overflow-y-auto gap-5"
+                  initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: 16 }} transition={{ duration: 0.22, ease: 'easeOut' }}
+                  className="mb-2 rounded-2xl overflow-hidden"
+                  style={{ background: 'rgba(4,8,16,0.88)', backdropFilter: 'blur(20px)', border: '1px solid rgba(255,255,255,0.08)' }}
                 >
-                  {/* Scene counter */}
-                  <div className="flex items-center gap-2">
-                    <span className="w-6 h-6 rounded-full bg-blue-900/60 border border-blue-500/50 flex items-center justify-center font-mono text-xs text-blue-300 font-bold">{sceneId}</span>
-                    <span className="text-white/30 font-mono text-[11px] uppercase tracking-widest">{sceneId} of 5</span>
-                  </div>
+                  <div className="p-5 flex flex-col gap-4 max-h-[55vh] overflow-y-auto">
 
-                  {/* The Question */}
-                  <div>
-                    <p className="text-[#4da3ff]/60 font-mono text-[10px] uppercase tracking-widest mb-1.5">The Question</p>
-                    <h2 className="text-white text-lg font-semibold leading-snug">{sceneData.question}</h2>
-                  </div>
+                    {/* Feynman Quote */}
+                    <div className="border-l-2 border-[#4da3ff]/30 pl-3">
+                      <p className="text-[#4da3ff]/50 font-mono text-[10px] uppercase tracking-widest mb-1.5">Feynman Said</p>
+                      <blockquote className="text-white/65 text-sm italic leading-relaxed">{sceneData.quote}</blockquote>
+                      <cite className="text-white/25 font-mono text-[10px] not-italic block mt-1.5">{sceneData.author}</cite>
+                    </div>
 
-                  {/* Feynman Quote */}
-                  <div className="border-l-2 border-blue-500/25 pl-3">
-                    <p className="text-[#4da3ff]/50 font-mono text-[10px] uppercase tracking-widest mb-1.5">Feynman Said</p>
-                    <blockquote className="text-white/60 text-sm italic leading-relaxed mb-1.5">{sceneData.quote}</blockquote>
-                    <cite className="text-white/20 font-mono text-[10px] not-italic">{sceneData.author}</cite>
-                  </div>
-
-                  {/* How It Works */}
-                  <div>
-                    <p className="text-[#4da3ff]/50 font-mono text-[10px] uppercase tracking-widest mb-3">How It Works</p>
-                    <div className="space-y-4">
-                      {sceneData.steps.map((step, i) => (
-                        <div key={i} className="flex gap-3">
-                          <span className="text-blue-400/50 font-mono text-[10px] font-bold shrink-0 mt-0.5">{String(i + 1).padStart(2, '0')}</span>
-                          <div>
-                            <p className="text-[#4da3ff] text-sm font-semibold mb-1">{step.label}</p>
-                            <p className="text-white/55 text-sm leading-relaxed">{step.text}</p>
+                    {/* Steps */}
+                    <div>
+                      <p className="text-[#4da3ff]/50 font-mono text-[10px] uppercase tracking-widest mb-3">How It Works</p>
+                      <div className="flex flex-col gap-3.5">
+                        {sceneData.steps.map((step, i) => (
+                          <div key={i} className="flex gap-3">
+                            <span className="text-[#4da3ff]/40 font-mono text-[10px] font-bold shrink-0 mt-0.5">{String(i+1).padStart(2,'0')}</span>
+                            <div>
+                              <p className="text-[#4da3ff] text-sm font-semibold mb-0.5">{step.label}</p>
+                              <p className="text-white/55 text-sm leading-relaxed">{step.text}</p>
+                            </div>
                           </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Key Insight */}
-                  <div className="mt-auto rounded-xl p-3.5" style={{ background: 'rgba(30,60,120,0.25)', border: '1px solid rgba(77,163,255,0.2)' }}>
-                    <div className="flex items-center gap-1.5 mb-1.5">
-                      <span className="text-[#4da3ff] text-xs">✦</span>
-                      <span className="text-[#4da3ff] font-mono text-[10px] uppercase tracking-widest">Key Insight</span>
-                    </div>
-                    <p className="text-blue-100/75 text-sm leading-relaxed">{sceneData.insight}</p>
-                  </div>
-
-                  {/* Scene 2 legend */}
-                  {sceneId === 2 && (
-                    <div className="rounded-xl p-3.5" style={{ border: '1px solid rgba(255,255,255,0.06)', background: 'rgba(255,255,255,0.02)' }}>
-                      <p className="text-[#4da3ff]/50 font-mono text-[10px] uppercase tracking-widest mb-2.5">Legend</p>
-                      <div className="space-y-2 text-sm">
-                        <div className="flex items-center gap-2"><span className="w-2.5 h-2.5 rounded-full bg-[#ff3300] shrink-0"/><span className="text-white/60">O — Oxygen (δ⁻)</span></div>
-                        <div className="flex items-center gap-2"><span className="w-2.5 h-2.5 rounded-full bg-[#ddf4ff] shrink-0"/><span className="text-white/60">H — Hydrogen (δ⁺)</span></div>
-                        <div className="flex items-center gap-2"><span className="w-4 h-px bg-[#ffee44] shrink-0"/><span className="text-white/60">Covalent bond</span></div>
-                        <p className="text-white/30 text-xs mt-1">Click any atom to explore.</p>
+                        ))}
                       </div>
                     </div>
-                  )}
-                </motion.div>
-              </AnimatePresence>
-            </motion.aside>
-          )}
-        </AnimatePresence>
 
-        {/* Panel toggle button */}
-        <button
-          onClick={() => setPanelOpen(o => !o)}
-          className="mt-2 w-7 h-7 rounded-lg flex items-center justify-center transition-all hover:bg-white/10"
-          style={{ background: 'rgba(4,8,16,0.75)', border: '1px solid rgba(255,255,255,0.08)', backdropFilter: 'blur(8px)' }}
-        >
-          <span className="text-white/40 text-xs">{panelOpen ? '‹' : '›'}</span>
-        </button>
+                    {/* Key insight */}
+                    <div className="rounded-xl p-3" style={{ background: 'rgba(20,50,100,0.4)', border: '1px solid rgba(77,163,255,0.2)' }}>
+                      <p className="text-[#4da3ff] font-mono text-[10px] uppercase tracking-widest mb-1.5">✦ Key Insight</p>
+                      <p className="text-blue-100/75 text-sm leading-relaxed">{sceneData.insight}</p>
+                    </div>
+
+                    {/* Scene 2 legend */}
+                    {sceneId === 2 && (
+                      <div className="flex flex-col gap-1.5">
+                        <p className="text-[#4da3ff]/50 font-mono text-[10px] uppercase tracking-widest mb-1">Legend</p>
+                        <div className="flex items-center gap-2 text-sm"><span className="w-2.5 h-2.5 rounded-full bg-[#ff3300] shrink-0"/><span className="text-white/55">O — Oxygen (δ⁻)</span></div>
+                        <div className="flex items-center gap-2 text-sm"><span className="w-2.5 h-2.5 rounded-full bg-[#ddf4ff] shrink-0"/><span className="text-white/55">H — Hydrogen (δ⁺)</span></div>
+                        <div className="flex items-center gap-2 text-sm"><span className="w-4 h-px bg-[#ffee44] shrink-0"/><span className="text-white/55">Covalent bond</span></div>
+                        <p className="text-white/30 text-xs">Click any atom to explore.</p>
+                      </div>
+                    )}
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            {/* Compact question card — always visible */}
+            <div
+              className="rounded-2xl p-4 cursor-pointer select-none"
+              style={{ background: 'rgba(4,8,16,0.88)', backdropFilter: 'blur(20px)', border: '1px solid rgba(255,255,255,0.08)' }}
+              onClick={() => setPanelOpen(o => !o)}
+            >
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex items-start gap-2.5">
+                  <span className="w-5 h-5 rounded-full bg-blue-900/70 border border-blue-500/50 flex items-center justify-center font-mono text-[10px] text-blue-300 font-bold shrink-0 mt-0.5">{sceneId}</span>
+                  <h2 className="text-white text-sm font-semibold leading-snug">{sceneData.question}</h2>
+                </div>
+                <span className="text-white/25 text-xs shrink-0 mt-1">{panelOpen ? '↓' : '↑'}</span>
+              </div>
+            </div>
+
+          </motion.div>
+        </AnimatePresence>
       </div>
 
       {/* ── Overlays on simulation ── */}
+
+      {/* State badge — top left */}
+      {stateLabel && (
+        <div className="absolute top-14 left-4 z-10 pointer-events-none">
+          <div className={`inline-flex items-center px-3 py-1.5 rounded-lg border font-mono text-xs font-bold tracking-widest ${stateBadge}`}>
+            {stateLabel}
+          </div>
+        </div>
+      )}
 
       {/* Drag hint */}
       <AnimatePresence>
@@ -807,9 +800,8 @@ export default function Cap1Experience() {
             className="absolute bottom-24 left-1/2 -translate-x-1/2 pointer-events-none z-10"
           >
             <div className="flex items-center gap-2 rounded-full px-4 py-2"
-              style={{ background: 'rgba(6,13,26,0.8)', border: '1px solid rgba(26,58,106,0.4)', backdropFilter: 'blur(8px)' }}>
-              <span className="text-blue-400/60 text-sm">⟳</span>
-              <span className="text-white/35 font-mono text-[11px] uppercase tracking-widest">Drag to rotate · Scroll to zoom</span>
+              style={{ background: 'rgba(6,13,26,0.75)', border: '1px solid rgba(255,255,255,0.07)', backdropFilter: 'blur(8px)' }}>
+              <span className="text-white/30 font-mono text-[11px] uppercase tracking-widest">⟳ Drag to rotate · Scroll to zoom</span>
             </div>
           </motion.div>
         )}
@@ -830,16 +822,6 @@ export default function Cap1Experience() {
           </motion.div>
         )}
       </AnimatePresence>
-
-      {/* State badge */}
-      {stateLabel && (
-        <div className="absolute z-10 pointer-events-none"
-          style={{ top: '56px', left: panelOpen ? '340px' : '56px', transition: 'left 0.25s ease' }}>
-          <div className={`inline-flex items-center px-3 py-1.5 rounded-lg border font-mono text-xs font-bold tracking-widest ${stateBadge}`}>
-            {stateLabel}
-          </div>
-        </div>
-      )}
 
       {/* Avg speed readout — Scene 1 only */}
       {sceneId === 1 && (
