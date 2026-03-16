@@ -69,19 +69,12 @@ function buildPositions(): number[] {
 
 export default function IntroOverlay() {
   const containerRef = useRef<HTMLDivElement>(null);
-  const [visible, setVisible]     = useState<boolean | null>(null);
+  const [visible, setVisible]     = useState(true);
   const [showEnter, setShowEnter] = useState(false);
   const [fading, setFading]       = useState(false);
 
-  // Only show on first visit
-  useEffect(() => {
-    const seen = localStorage.getItem('feynviz_visited');
-    setVisible(!seen);
-  }, []);
-
   // CSS3D scene
   useEffect(() => {
-    if (!visible) return;
     const container = containerRef.current;
     if (!container) return;
 
@@ -219,15 +212,14 @@ export default function IntroOverlay() {
     return () => {
       (container as any)._introCleanup?.();
     };
-  }, [visible]);
+  }, []);
 
   const handleEnter = () => {
-    localStorage.setItem('feynviz_visited', '1');
     setFading(true);
     setTimeout(() => setVisible(false), 900);
   };
 
-  if (visible === null || !visible) return null;
+  if (!visible) return null;
 
   return (
     <div
