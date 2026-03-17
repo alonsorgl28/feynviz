@@ -243,7 +243,7 @@ export default function IntroOverlay() {
         <p
           style={{
             fontFamily: 'var(--font-mono)',
-            fontSize: '11px',
+            fontSize: '13px',
             letterSpacing: '0.28em',
             color: 'rgba(140,200,255,0.55)',
             textTransform: 'uppercase',
