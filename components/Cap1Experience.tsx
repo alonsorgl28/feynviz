@@ -187,11 +187,15 @@ function buildScene1(scene: THREE.Scene): SceneHandle {
 
   // Geometry — shared, single material
   const geo = new THREE.SphereGeometry(0.22, 16, 12);
-  const mat = new THREE.MeshStandardMaterial({ color: 0xffffff, emissive: 0xffffff, emissiveIntensity: 0.35, roughness: 0.3, metalness: 0.05 });
+  const mat = new THREE.MeshStandardMaterial({ color: 0xffffff, emissive: 0x000000, emissiveIntensity: 0, roughness: 0.35, metalness: 0.05 });
   const mesh = new THREE.InstancedMesh(geo, mat, N);
   mesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
   mesh.instanceColor = new THREE.InstancedBufferAttribute(new Float32Array(N * 3), 3);
   scene.add(mesh);
+
+  // Scene-1-local ambient — ensures atom colors read correctly without global emissive wash
+  const localAmb = new THREE.AmbientLight(0xffffff, 1.2);
+  scene.add(localAmb);
 
   const box = mkEnhancedBox(BOX); scene.add(box);
 
@@ -258,8 +262,8 @@ function buildScene1(scene: THREE.Scene): SceneHandle {
     // Per-atom velocity coloring — shows Maxwell-Boltzmann distribution
     for (let i = 0; i < N; i++) {
       const spd = velocities[i].length();
-      // Shift the color by relative speed vs mean (±0.18), clamped to [0,1]
-      const relativeShift = avgSpd > 0 ? (spd / avgSpd - 1) * 0.18 : 0;
+      // Shift the color by relative speed vs mean (±0.4), clamped to [0,1]
+      const relativeShift = avgSpd > 0 ? (spd / avgSpd - 1) * 0.4 : 0;
       const t = Math.max(0, Math.min(1, tN + relativeShift));
       tempColorNorm(t, _color);
       _dummy.position.copy(positions[i]);
@@ -277,7 +281,7 @@ function buildScene1(scene: THREE.Scene): SceneHandle {
     if (edgesObj) (edgesObj.material as THREE.LineBasicMaterial).opacity = 0.45 + 0.35 * Math.sin(Date.now() * 0.0015);
   };
 
-  return { update, dispose: () => scene.remove(mesh, box), getAvgSpeed: () => avgSpd };
+  return { update, dispose: () => scene.remove(mesh, box, localAmb), getAvgSpeed: () => avgSpd };
 }
 
 /* Scene 2 — H₂O with CSS2DObject labels */
