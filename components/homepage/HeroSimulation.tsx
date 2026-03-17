@@ -13,9 +13,9 @@ function makeAtomTex(): THREE.Texture {
 
   const grad = ctx.createRadialGradient(c, c, 0, c, c, c);
   grad.addColorStop(0,    'rgba(255,255,255,1)');
-  grad.addColorStop(0.35, 'rgba(255,255,255,0.9)');
-  grad.addColorStop(0.65, 'rgba(255,255,255,0.25)');
-  grad.addColorStop(1,    'rgba(255,255,255,0)');
+  grad.addColorStop(0.30, 'rgba(180,220,255,1)');
+  grad.addColorStop(0.60, 'rgba(100,170,255,0.5)');
+  grad.addColorStop(1,    'rgba(60,130,255,0)');
 
   ctx.fillStyle = grad;
   ctx.beginPath();
@@ -46,7 +46,7 @@ export default function HeroSimulation() {
 
     // ── Scene / Camera ─────────────────────────────────────────────────────
     const scene = new THREE.Scene();
-    scene.fog = new THREE.FogExp2(0x000000, 0.0012);
+    // no fog — it was dimming the particles too aggressively
 
     const camera = new THREE.PerspectiveCamera(55, W / H, 2, 2000);
     camera.position.z = 900;
@@ -54,10 +54,10 @@ export default function HeroSimulation() {
     // ── Atoms ──────────────────────────────────────────────────────────────
     const tex = makeAtomTex();
 
-    // Two layers: small atoms (100) + occasional larger molecules (18)
+    // Two layers: small atoms + occasional larger ones
     const layers = [
-      { count: 100, size: 14, opacity: 0.38 },
-      { count: 18,  size: 28, opacity: 0.22 },
+      { count: 180, size: 20, opacity: 0.90 },
+      { count: 28,  size: 38, opacity: 0.65 },
     ];
 
     const objects: THREE.Points[] = [];
@@ -88,10 +88,10 @@ export default function HeroSimulation() {
         size: layer.size,
         sizeAttenuation: true,
         map: tex,
-        alphaTest: 0.01,
         transparent: true,
         opacity: layer.opacity,
-        color: new THREE.Color(0x8cc8ff), // rgba(140, 200, 255) — spec color
+        color: new THREE.Color(0x8cc8ff),
+        blending: THREE.AdditiveBlending,
         depthWrite: false,
       });
 
