@@ -588,8 +588,6 @@ export default function Cap1Experience() {
   const shownDiscoveriesRef = useRef(new Set<string>());
 
   // POE state (Predict-Observe-Explain) — all scenes
-  const [poeAnswered, setPoeAnswered] = useState<'correct' | 'wrong' | null>(null);
-  const [poeVisible, setPoeVisible] = useState(true);
 
   const sceneData = SCENES.find(s => s.id === sceneId)!;
   const stateLabel = getStateLabel(sceneId, temp);
@@ -728,7 +726,7 @@ export default function Cap1Experience() {
     setShowFeynman(false);
     shownDiscoveriesRef.current = new Set();
     if (introTimerRef.current) clearTimeout(introTimerRef.current);
-    // no auto-dismiss — user dismisses by interacting (slider, POE, action button)
+    introTimerRef.current = setTimeout(() => setSceneIntroVisible(false), 6000);
     return () => { if (introTimerRef.current) clearTimeout(introTimerRef.current); };
   }, [sceneId]);
 
@@ -754,13 +752,7 @@ export default function Cap1Experience() {
 
   const goScene = useCallback((id: SceneId) => {
     setSceneId(id); tempRef.current = 15; setTemp(15);
-    setPoeAnswered(null); setPoeVisible(true);
     setDiscoveryCard(null); setShowFeynman(false);
-  }, []);
-
-  const handlePOE = useCallback((correct: boolean) => {
-    setPoeAnswered(correct ? 'correct' : 'wrong');
-    setTimeout(() => setPoeVisible(false), 2200);
   }, []);
 
   const buttonLabel = (sceneData as { buttonLabel?: string }).buttonLabel;
@@ -815,43 +807,21 @@ export default function Cap1Experience() {
         </div>
       </header>
 
-      {/* ══ 1. SCENE INTRO — question + context, fades after 3.2s ══ */}
+      {/* ══ 1. SCENE QUESTION PILL — top center, auto-dismiss 6s ══ */}
       <AnimatePresence>
         {sceneIntroVisible && (
           <motion.div
-            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            transition={{ duration: 0.45 }}
-            className="absolute inset-0 flex flex-col items-center justify-center z-30 pointer-events-none"
-            style={{ background: 'radial-gradient(ellipse at center, rgba(3,6,18,0.85) 0%, rgba(3,6,18,0.3) 60%, transparent 80%)' }}
+            initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.4 }}
+            className="absolute top-14 left-1/2 -translate-x-1/2 z-30 pointer-events-none"
           >
-            <AnimatePresence mode="wait">
-              <motion.div key={sceneId}
-                initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}
-                transition={{ duration: 0.4, delay: 0.1 }}
-                className="text-center px-8 max-w-xl flex flex-col gap-4"
-              >
-                <p className="text-[#4da3ff]/55 font-mono text-[10px] uppercase tracking-widest">
-                  {sceneId} of 5 · {sceneData.nav}
-                </p>
-                <h2 className="text-white font-bold leading-tight"
-                  style={{ fontSize: 'clamp(22px, 3vw, 38px)', letterSpacing: '-0.02em' }}>
-                  {sceneData.question}
-                </h2>
-                {SCENE_CONTEXT[sceneId] && (
-                  <div className="flex flex-col gap-2">
-                    <p className="text-white/75 text-base leading-relaxed">
-                      {SCENE_CONTEXT[sceneId].hook}
-                    </p>
-                    <p className="text-white/40 text-sm leading-relaxed">
-                      {SCENE_CONTEXT[sceneId].fact}
-                    </p>
-                  </div>
-                )}
-                <p className="text-white/20 font-mono text-[10px] uppercase tracking-widest mt-1">
-                  Explore the simulation ↓
-                </p>
-              </motion.div>
-            </AnimatePresence>
+            <div className="rounded-xl px-5 py-3 text-center"
+              style={{ background: 'rgba(4,12,26,0.9)', border: '1px solid rgba(77,130,255,0.3)', backdropFilter: 'blur(16px)', whiteSpace: 'nowrap' }}>
+              <p className="text-[#4da3ff]/55 font-mono text-[10px] uppercase tracking-widest mb-1">
+                {sceneId} of 5 · {sceneData.nav}
+              </p>
+              <p className="text-white text-sm font-medium">{sceneData.question}</p>
+            </div>
           </motion.div>
         )}
       </AnimatePresence>
@@ -874,51 +844,7 @@ export default function Cap1Experience() {
         </div>
       )}
 
-      {/* ══ 4. POE — predict first, all scenes ══ */}
-      <AnimatePresence>
-        {sceneData.poe && poeVisible && !poeAnswered && (
-          <motion.div
-            initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -8 }} transition={{ delay: 3.5, duration: 0.4 }}
-            className="absolute top-14 left-1/2 -translate-x-1/2 z-30"
-          >
-            <div className="rounded-xl px-6 py-4 text-center"
-              style={{ background: 'rgba(4,12,26,0.95)', border: '1px solid rgba(77,130,255,0.3)', backdropFilter: 'blur(16px)' }}>
-              <p className="text-[#4da3ff]/55 font-mono text-[10px] uppercase tracking-widest mb-2">Predict first</p>
-              <p className="text-white text-sm font-medium mb-4">{sceneData.poe.predict}</p>
-              <div className="flex gap-2.5 justify-center">
-                {sceneData.poe.options.map((opt, i) => (
-                  <button key={i} onClick={() => { handlePOE(i === sceneData.poe!.correct); dismissIntro(); }}
-                    className="px-4 py-2 rounded-lg text-white/70 text-sm transition-colors hover:bg-white/8 hover:text-white"
-                    style={{ border: '1px solid rgba(255,255,255,0.15)' }}>
-                    {opt}
-                  </button>
-                ))}
-              </div>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* POE feedback */}
-      <AnimatePresence>
-        {sceneData.poe && poeAnswered && poeVisible && (
-          <motion.div
-            initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0 }} transition={{ duration: 0.3 }}
-            className="absolute top-14 left-1/2 -translate-x-1/2 z-30"
-          >
-            <div className="rounded-xl px-5 py-3 text-center"
-              style={{ background: 'rgba(4,12,26,0.95)', border: `1px solid ${poeAnswered === 'correct' ? 'rgba(52,211,153,0.4)' : 'rgba(251,146,60,0.35)'}`, backdropFilter: 'blur(16px)' }}>
-              <p className={`text-sm font-semibold ${poeAnswered === 'correct' ? 'text-emerald-300' : 'text-orange-300'}`}>
-                {poeAnswered === 'correct' ? sceneData.poe.hit : sceneData.poe.miss}
-              </p>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* ══ 5. DISCOVERY CARD — bottom left, doesn't block simulation ══ */}
+      {/* ══ 4. DISCOVERY CARD — bottom left, doesn't block simulation ══ */}
       <AnimatePresence>
         {discoveryCard && (
           <motion.div
