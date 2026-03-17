@@ -728,7 +728,7 @@ export default function Cap1Experience() {
     setShowFeynman(false);
     shownDiscoveriesRef.current = new Set();
     if (introTimerRef.current) clearTimeout(introTimerRef.current);
-    introTimerRef.current = setTimeout(() => setSceneIntroVisible(false), 3200);
+    // no auto-dismiss — user dismisses by interacting (slider, POE, action button)
     return () => { if (introTimerRef.current) clearTimeout(introTimerRef.current); };
   }, [sceneId]);
 
