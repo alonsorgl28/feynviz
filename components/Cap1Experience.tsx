@@ -262,8 +262,8 @@ function buildScene1(scene: THREE.Scene): SceneHandle {
     // Per-atom velocity coloring — shows Maxwell-Boltzmann distribution
     for (let i = 0; i < N; i++) {
       const spd = velocities[i].length();
-      // Shift the color by relative speed vs mean (±0.4), clamped to [0,1]
-      const relativeShift = avgSpd > 0 ? (spd / avgSpd - 1) * 0.4 : 0;
+      // Shift color by relative speed — capped at ±0.15 so cold atoms stay blue, hot atoms stay red
+      const relativeShift = avgSpd > 0 ? Math.max(-0.15, Math.min(0.15, (spd / avgSpd - 1) * 0.4)) : 0;
       const t = Math.max(0, Math.min(1, tN + relativeShift));
       tempColorNorm(t, _color);
       _dummy.position.copy(positions[i]);
