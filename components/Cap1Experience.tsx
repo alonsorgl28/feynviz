@@ -779,7 +779,7 @@ export default function Cap1Experience() {
       <div ref={mountRef} className="absolute inset-0" />
 
       {/* ── Header overlay ── */}
-      <header className="absolute top-0 left-0 right-0 h-12 flex items-center justify-between px-5 z-20"
+      <header className="absolute top-0 left-0 right-0 h-12 flex items-center justify-between px-5 z-50"
         style={{ background: 'rgba(3,4,12,0.82)', borderBottom: '1px solid rgba(255,255,255,0.05)', backdropFilter: 'blur(12px)' }}>
         <div className="flex items-center gap-3">
           <a href="/" className="text-white/55 font-mono text-[11px] hover:text-white transition-colors">← Back</a>
@@ -880,7 +880,7 @@ export default function Cap1Experience() {
           <motion.div
             initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -8 }} transition={{ delay: 3.5, duration: 0.4 }}
-            className="absolute top-14 left-1/2 -translate-x-1/2 z-20"
+            className="absolute top-14 left-1/2 -translate-x-1/2 z-30"
           >
             <div className="rounded-xl px-6 py-4 text-center"
               style={{ background: 'rgba(4,12,26,0.95)', border: '1px solid rgba(77,130,255,0.3)', backdropFilter: 'blur(16px)' }}>
@@ -906,7 +906,7 @@ export default function Cap1Experience() {
           <motion.div
             initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0 }} transition={{ duration: 0.3 }}
-            className="absolute top-14 left-1/2 -translate-x-1/2 z-20"
+            className="absolute top-14 left-1/2 -translate-x-1/2 z-30"
           >
             <div className="rounded-xl px-5 py-3 text-center"
               style={{ background: 'rgba(4,12,26,0.95)', border: `1px solid ${poeAnswered === 'correct' ? 'rgba(52,211,153,0.4)' : 'rgba(251,146,60,0.35)'}`, backdropFilter: 'blur(16px)' }}>
@@ -926,7 +926,7 @@ export default function Cap1Experience() {
             animate={{ opacity: 1, x: 0, y: 0 }}
             exit={{ opacity: 0, x: -16, y: 8 }}
             transition={{ duration: 0.3, ease: 'easeOut' }}
-            className="absolute left-4 z-30 w-72"
+            className="absolute left-4 z-35 w-72"
             style={{ bottom: '108px' }}
           >
             <div className="rounded-2xl p-5 shadow-2xl"
@@ -983,7 +983,7 @@ export default function Cap1Experience() {
         {atomInfo && (
           <motion.div
             initial={{ opacity: 0, x: 10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 10 }}
-            className="absolute top-1/2 right-4 -translate-y-1/2 w-72 rounded-2xl p-5 shadow-2xl z-20"
+            className="absolute top-1/2 right-4 -translate-y-1/2 w-72 rounded-2xl p-5 shadow-2xl z-35"
             style={{ background: 'rgba(4,10,22,0.97)', border: '1px solid rgba(77,130,255,0.25)', backdropFilter: 'blur(16px)' }}
           >
             <p className="text-[#4da3ff] font-mono text-[10px] uppercase tracking-widest mb-2">{atomInfo.name}</p>
@@ -999,7 +999,7 @@ export default function Cap1Experience() {
           <motion.div
             initial={{ opacity: 0, x: 40 }} animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: 40 }} transition={{ duration: 0.28, ease: 'easeOut' }}
-            className="absolute top-12 right-0 bottom-20 w-[420px] z-30 flex flex-col overflow-hidden"
+            className="absolute top-12 right-0 bottom-20 w-[420px] z-40 flex flex-col overflow-hidden"
             style={{ background: 'rgba(4,8,20,0.98)', borderLeft: '1px solid rgba(255,255,255,0.06)', backdropFilter: 'blur(24px)' }}
           >
             {/* Panel header */}
@@ -1093,7 +1093,7 @@ export default function Cap1Experience() {
       </AnimatePresence>
 
       {/* ══ 10. CONTROLS BAR — bottom gradient ══ */}
-      <div className="absolute bottom-0 left-0 right-0 z-20"
+      <div className="absolute bottom-0 left-0 right-0 z-50"
         style={{ background: 'linear-gradient(to top, rgba(3,4,12,0.95) 60%, transparent 100%)' }}>
 
         {/* Feynman button — bottom right */}
