@@ -25,6 +25,7 @@ const SCENES = [
     insight: 'In that single sentence, Feynman packed more information about the nature of reality than almost any other description in history.',
     control: 'slider' as const,
     camera: { r: 18, y: 9, speed: 0.003 },
+    poe: { predict: 'What happens to atoms when they are heated?', options: ['They move faster', 'They change chemistry'] as const, correct: 0, hit: '✓ Correct — drag the slider to see it.', miss: 'Not quite — drag the slider to find out.' },
   },
   {
     id: 2, nav: 'H₂O Molecule',
@@ -38,6 +39,7 @@ const SCENES = [
     insight: 'All the strangeness of water — and all life on Earth — emerges from a 104.5° angle.',
     control: 'none' as const,
     camera: { r: 7, y: 2, speed: 0.006 },
+    poe: { predict: 'Why does water stick to itself?', options: ["Electric charge imbalance", "It's heavier than other liquids"] as const, correct: 0, hit: '✓ Correct — click the atoms to explore the charges.', miss: 'Not quite — click the atoms to find out.' },
   },
   {
     id: 3, nav: 'Three States',
@@ -51,6 +53,7 @@ const SCENES = [
     insight: 'Drag slowly across the thresholds — MELTING and VAPORIZATION happen at precise energy levels, not gradually.',
     control: 'slider' as const,
     camera: { r: 16, y: 7, speed: 0.0025 },
+    poe: { predict: 'What separates ice, water, and steam?', options: ['Energy — same molecule', 'Different chemicals'] as const, correct: 0, hit: '✓ Correct — drag the slider across the thresholds.', miss: 'Not quite — drag the slider to find out.' },
   },
   {
     id: 4, nav: 'H₂ + O₂ → Water',
@@ -65,6 +68,7 @@ const SCENES = [
     control: 'button' as const,
     buttonLabel: 'REACT',
     camera: { r: 14, y: 5, speed: 0.002 },
+    poe: { predict: 'What is the only product of hydrogen combustion?', options: ['Pure water', 'Carbon dioxide'] as const, correct: 0, hit: '✓ Correct — press REACT to watch it happen.', miss: 'Not quite — press REACT to find out.' },
   },
   {
     id: 5, nav: 'Salt in Water',
@@ -79,6 +83,7 @@ const SCENES = [
     control: 'button' as const,
     buttonLabel: 'DISSOLVE',
     camera: { r: 10, y: 4, speed: 0.004 },
+    poe: { predict: 'Why does salt disappear in water?', options: ['Water molecules are electric dipoles', 'Salt breaks into smaller pieces'] as const, correct: 0, hit: '✓ Correct — press DISSOLVE to watch it happen.', miss: 'Not quite — press DISSOLVE to find out.' },
   },
 ] as const;
 
@@ -578,7 +583,7 @@ export default function Cap1Experience() {
   const introTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const shownDiscoveriesRef = useRef(new Set<string>());
 
-  // POE state (Predict-Observe-Explain) — Scene 1 only
+  // POE state (Predict-Observe-Explain) — all scenes
   const [poeAnswered, setPoeAnswered] = useState<'correct' | 'wrong' | null>(null);
   const [poeVisible, setPoeVisible] = useState(true);
 
@@ -745,7 +750,7 @@ export default function Cap1Experience() {
 
   const goScene = useCallback((id: SceneId) => {
     setSceneId(id); tempRef.current = 15; setTemp(15);
-    if (id === 1) { setPoeAnswered(null); setPoeVisible(true); }
+    setPoeAnswered(null); setPoeVisible(true);
     setDiscoveryCard(null); setShowFeynman(false);
   }, []);
 
@@ -865,9 +870,9 @@ export default function Cap1Experience() {
         </div>
       )}
 
-      {/* ══ 4. POE — Scene 1 predict first ══ */}
+      {/* ══ 4. POE — predict first, all scenes ══ */}
       <AnimatePresence>
-        {sceneId === 1 && poeVisible && !poeAnswered && (
+        {sceneData.poe && poeVisible && !poeAnswered && (
           <motion.div
             initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -8 }} transition={{ delay: 3.5, duration: 0.4 }}
@@ -876,18 +881,15 @@ export default function Cap1Experience() {
             <div className="rounded-xl px-6 py-4 text-center"
               style={{ background: 'rgba(4,12,26,0.95)', border: '1px solid rgba(77,130,255,0.3)', backdropFilter: 'blur(16px)' }}>
               <p className="text-[#4da3ff]/55 font-mono text-[10px] uppercase tracking-widest mb-2">Predict first</p>
-              <p className="text-white text-sm font-medium mb-4">What happens when atoms are heated?</p>
+              <p className="text-white text-sm font-medium mb-4">{sceneData.poe.predict}</p>
               <div className="flex gap-2.5 justify-center">
-                <button onClick={() => { handlePOE(true); dismissIntro(); }}
-                  className="px-4 py-2 rounded-lg text-blue-200 text-sm transition-colors hover:bg-blue-900/40"
-                  style={{ border: '1px solid rgba(77,130,255,0.4)' }}>
-                  They move faster
-                </button>
-                <button onClick={() => { handlePOE(false); dismissIntro(); }}
-                  className="px-4 py-2 rounded-lg text-white/40 text-sm transition-colors hover:bg-white/5"
-                  style={{ border: '1px solid rgba(255,255,255,0.1)' }}>
-                  They change chemistry
-                </button>
+                {sceneData.poe.options.map((opt, i) => (
+                  <button key={i} onClick={() => { handlePOE(i === sceneData.poe!.correct); dismissIntro(); }}
+                    className="px-4 py-2 rounded-lg text-white/70 text-sm transition-colors hover:bg-white/8 hover:text-white"
+                    style={{ border: '1px solid rgba(255,255,255,0.15)' }}>
+                    {opt}
+                  </button>
+                ))}
               </div>
             </div>
           </motion.div>
@@ -896,7 +898,7 @@ export default function Cap1Experience() {
 
       {/* POE feedback */}
       <AnimatePresence>
-        {sceneId === 1 && poeAnswered && poeVisible && (
+        {sceneData.poe && poeAnswered && poeVisible && (
           <motion.div
             initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0 }} transition={{ duration: 0.3 }}
@@ -905,7 +907,7 @@ export default function Cap1Experience() {
             <div className="rounded-xl px-5 py-3 text-center"
               style={{ background: 'rgba(4,12,26,0.95)', border: `1px solid ${poeAnswered === 'correct' ? 'rgba(52,211,153,0.4)' : 'rgba(251,146,60,0.35)'}`, backdropFilter: 'blur(16px)' }}>
               <p className={`text-sm font-semibold ${poeAnswered === 'correct' ? 'text-emerald-300' : 'text-orange-300'}`}>
-                {poeAnswered === 'correct' ? '✓ Correct — drag the slider to see it.' : 'Not quite — drag the slider to find out.'}
+                {poeAnswered === 'correct' ? sceneData.poe.hit : sceneData.poe.miss}
               </p>
             </div>
           </motion.div>
