@@ -776,10 +776,10 @@ export default function Cap1Experience() {
     <div className="w-screen h-screen bg-[#03040c] overflow-hidden relative">
 
       {/* ── Simulation fills the entire screen ── */}
-      <div ref={mountRef} className="absolute inset-0" />
+      <div ref={mountRef} className="absolute inset-0" style={{ zIndex: 0 }} />
 
       {/* ── Header overlay ── */}
-      <header className="absolute top-0 left-0 right-0 h-12 flex items-center justify-between px-5 z-50"
+      <header className="fixed top-0 left-0 right-0 h-12 flex items-center justify-between px-5 z-50"
         style={{ background: 'rgba(3,4,12,0.82)', borderBottom: '1px solid rgba(255,255,255,0.05)', backdropFilter: 'blur(12px)' }}>
         <div className="flex items-center gap-3">
           <a href="/" className="text-white/55 font-mono text-[11px] hover:text-white transition-colors">← Back</a>
@@ -1093,7 +1093,7 @@ export default function Cap1Experience() {
       </AnimatePresence>
 
       {/* ══ 10. CONTROLS BAR — bottom gradient ══ */}
-      <div className="absolute bottom-0 left-0 right-0 z-50"
+      <div className="fixed bottom-0 left-0 right-0 z-50"
         style={{ background: 'linear-gradient(to top, rgba(3,4,12,0.95) 60%, transparent 100%)' }}>
 
         {/* Feynman button — bottom right */}
